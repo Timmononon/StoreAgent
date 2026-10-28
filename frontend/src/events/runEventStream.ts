@@ -209,6 +209,7 @@ async function connectKnownRunEventStream(
             callbackFailure = error;
             throw error;
           }
+          // Keep failed projections replayable by advancing only after onEvent succeeds.
           lastSequence = event.sequence;
           options.onCursor?.(lastSequence);
           if (TERMINAL_TYPES.has(event.type) || options.pauseWhen?.(event)) {
