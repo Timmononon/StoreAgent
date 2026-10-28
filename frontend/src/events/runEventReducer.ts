@@ -308,6 +308,7 @@ export function initialRunEventState(runId: string, threadId: string): RunEventS
 }
 
 export function applyRunEvent(state: RunEventState, event: RuntimeRunEvent): RunEventState {
+  // A terminal Run ignores newer events too, preventing late deltas from changing its projection.
   if (
     event.run_id !== state.runId ||
     event.thread_id !== state.threadId ||
