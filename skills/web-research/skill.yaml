@@ -1,0 +1,11 @@
+schema_version: 1
+name: web-research
+version: 2.2.0
+description: Research current public-web information with Run-local Source IDs and query-ranked Tavily extracts.
+allowed_tools:
+  - web_fetch
+  - web_search
+required_roles: []
+required_secrets:
+  - WEB_RESEARCH_RUNTIME
+entrypoint: SKILL.md

@@ -1,0 +1,151 @@
+<template>
+  <section class="welcome-screen">
+    <img :src="knowledgeMark" class="welcome-avatar" alt="" aria-hidden="true" />
+    <h2>你好，我是知识助手。</h2>
+    <p>基于你的文档查找信息、整理答案，并提供可追溯的引用。</p>
+
+    <div class="welcome-mode-grid" aria-label="快速选择能力">
+      <button
+        type="button"
+        :class="{ active: !capabilityStore.selectedSkillName }"
+        @click="selectMode(null)"
+      >
+        <span><i class="fa-regular fa-message"></i></span>
+        <strong>智能对话</strong>
+        <small>自动选择合适工具</small>
+      </button>
+      <button
+        v-for="skill in featuredSkills"
+        :key="skill.name"
+        type="button"
+        :class="{ active: capabilityStore.selectedSkillName === skill.name }"
+        :disabled="!skill.available"
+        :title="
+          skill.available
+            ? `使用 ${skillCompactName(skill.name, skill.description)}`
+            : unavailableLabel(skill)
+        "
+        @click="selectMode(skill.name)"
+      >
+        <span><i :class="skillDisplayIcon(skill.name)"></i></span>
+        <strong>{{ skillCompactName(skill.name, skill.description) }}</strong>
+        <small>{{ skill.available ? skillDisplaySummary(skill) : unavailableLabel(skill) }}</small>
+      </button>
+    </div>
+
+    <button type="button" class="welcome-center-link" @click="capabilityStore.openCenter">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      浏览全部能力与工具
+    </button>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import {
+  skillCompactName,
+  skillDisplayIcon,
+  skillDisplaySummary,
+} from '@/capabilities/skillPresentation';
+import { useCapabilityStore } from '@/stores/capabilities';
+import type { CapabilitySkill } from '@/types/capabilities';
+import knowledgeMark from '@/assets/images/knowledge-mark.svg';
+
+const capabilityStore = useCapabilityStore();
+const featuredNames = ['knowledge-base', 'web-research', 'sql-assistant', 'sandbox'];
+const featuredSkills = computed(() =>
+  featuredNames
+    .map((name) => capabilityStore.skills.find((skill) => skill.name === name))
+    .filter((skill): skill is CapabilitySkill => Boolean(skill))
+);
+
+const selectMode = (name: string | null) => {
+  capabilityStore.selectSkill(name);
+  window.dispatchEvent(new CustomEvent('capability-selected'));
+};
+
+const unavailableLabel = (skill: CapabilitySkill) =>
+  skill.availability_reason === 'permission_required' ? '当前账号权限不足' : '运行配置尚未就绪';
+</script>
+
+<style scoped>
+.welcome-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.welcome-mode-grid button {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 5px;
+  padding: 12px 8px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.welcome-mode-grid button:hover:not(:disabled),
+.welcome-mode-grid button.active {
+  border-color: rgba(168, 246, 209, 0.3);
+  color: var(--text-soft);
+  background: rgba(168, 246, 209, 0.055);
+  transform: translateY(-2px);
+}
+
+.welcome-mode-grid button > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--mint);
+  background: rgba(168, 246, 209, 0.07);
+  font-size: var(--font-small);
+}
+
+.welcome-mode-grid strong,
+.welcome-mode-grid small {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.welcome-mode-grid strong {
+  color: inherit;
+  font-size: var(--font-small);
+}
+
+.welcome-mode-grid small {
+  font-size: var(--font-micro);
+}
+
+.welcome-center-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--lilac);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-caption);
+}
+
+@media (max-width: 720px) {
+  .welcome-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>
