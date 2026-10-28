@@ -135,6 +135,7 @@ async function executeRefresh(attempt: RefreshAttempt): Promise<AuthSession> {
   assertRefreshAttemptCurrent(attempt);
   const response = await credentialClient.post<AuthSession>('/auth/refresh', undefined);
   const session = parseAuthSession(response.data);
+  // Reject responses made stale by logout or an account switch during the request.
   assertRefreshAttemptCurrent(attempt);
   if (attempt.expectedUsername !== null && session.username !== attempt.expectedUsername) {
     throw new AuthSessionSubjectMismatchError();
