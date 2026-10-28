@@ -68,4 +68,5 @@ ALLOWED_TRANSITIONS = {
 
 
 def can_transition(current: str, target: str) -> bool:
+    # 重复写入当前状态保持幂等；终态只拒绝向其他状态迁移。
     return current == target or target in ALLOWED_TRANSITIONS.get(current, set())

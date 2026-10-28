@@ -335,6 +335,7 @@ class RunExecutionManager:
             )
         except asyncio.CancelledError:
             if token.reason == "ownership_lost":
+                # 租约已丢失，旧 owner 不再拥有写入终态的权限。
                 return
             try:
                 if token.reason == "user":
