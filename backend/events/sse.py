@@ -6,6 +6,7 @@ from backend.events.generated.run_event_v1 import RunEventV1
 
 
 def format_sse_event(event: RunEventV1) -> str:
+    # 使用持久化 sequence 作为 SSE id，供 Last-Event-ID 精确续传。
     return (
         f"id: {event.sequence}\n"
         f"event: {event.type.value}\n"

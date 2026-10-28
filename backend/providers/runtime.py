@@ -164,6 +164,7 @@ class ProviderRuntime:
             self._started = True
 
     async def _close_on_owner_loop(self) -> None:
+        # 即使 Rerank 关闭失败，也继续释放 Embedding，再汇总抛出异常。
         errors: list[BaseException] = []
         try:
             if self._reranker is not None:
