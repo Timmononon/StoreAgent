@@ -144,6 +144,7 @@ class ThreadService:
             raise ValueError("before 必须是正整数 sequence")
         if not 1 <= limit <= 500:
             raise ValueError("limit 必须在 1 到 500 之间")
+        # 多取一条判断是否还有更早消息，无需额外查询总数。
         rows = self.repository.list_messages_before(
             username,
             resolved_id,
@@ -154,6 +155,7 @@ class ThreadService:
             raise AppError(ErrorCode.NOT_FOUND, "Thread 不存在", status_code=404)
         has_previous = len(rows) > limit
         selected = rows[:limit]
+        # Repository 按新到旧取页，响应按 sequence 正序展示。
         messages = tuple(_message(record) for record in reversed(selected))
         return ThreadMessagePage(
             messages=messages,

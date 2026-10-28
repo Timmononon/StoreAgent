@@ -88,6 +88,7 @@ def and_filter(*expressions: str | None) -> str:
     ]
     if not normalized:
         return "id < 0"
+    # 子表达式单独加括号，避免其中的 or 改变组合条件的优先级。
     return " and ".join(f"({expression})" for expression in normalized)
 
 
