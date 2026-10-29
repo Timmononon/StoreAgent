@@ -150,6 +150,7 @@ export function parseMarkdown(text: string, msgIndex?: number | null): string {
       return part;
     })
     .join('');
+  // 在引用标记插入后统一清洗，确保生成的 HTML 也经过同一安全边界。
   return sanitizeMarkdownHtml(withCitations);
 }
 
