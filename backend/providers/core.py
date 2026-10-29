@@ -719,6 +719,7 @@ class ProviderExecutor:
         cause: ProviderError,
     ) -> None:
         remaining = self._remaining(context)
+        # 退避也计入同一个绝对 deadline，预算不足时不再安排下一次尝试。
         if remaining is not None and delay >= remaining:
             raise ProviderError.deadline_exceeded(
                 context,
