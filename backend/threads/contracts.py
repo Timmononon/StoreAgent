@@ -7,6 +7,7 @@ from uuid import uuid4
 from pydantic import StringConstraints
 
 
+# ThreadId 类型与 validate_thread_id 共用此规则，避免入口格式约束漂移。
 THREAD_ID_PATTERN: Final = r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$"
 _THREAD_ID = re.compile(THREAD_ID_PATTERN)
 
