@@ -128,6 +128,7 @@ export function buildManagedHttpToolPayload(draft: HttpToolFormDraft): ManagedHt
 }
 
 export function buildSqlAssistantPayload(draft: SqlAssistantFormDraft): SqlAssistantConfigPayload {
+  // 这里接收 DSN 的 Secret 名称，避免把连接凭据写入配置 payload。
   const dsnSecretName = requiredText(draft.dsnSecretName, 'DSN Secret 名称');
   if (!/^[A-Z][A-Z0-9_]{0,127}$/.test(dsnSecretName)) {
     throw new Error('DSN Secret 名称必须使用大写字母、数字和下划线');
