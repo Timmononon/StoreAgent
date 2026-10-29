@@ -41,6 +41,7 @@ def _is_frontend_html(*, path: str, headers: MutableHeaders) -> bool:
     content_type = headers.get("content-type", "").split(";", 1)[0].strip().lower()
     if content_type != "text/html":
         return False
+    # API 文档依赖 CDN 资源，不能套用正式前端的 same-origin CSP。
     return not any(
         path == prefix or path.startswith(f"{prefix}/") for prefix in _DOCS_PREFIXES
     )
