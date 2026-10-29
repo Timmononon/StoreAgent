@@ -73,6 +73,7 @@ class RunToolApprovalGrant:
         thread_id: str,
         run_id: str,
     ) -> bool:
+        # 审批只对完整 Run 身份生效，不能仅凭 Tool 名称跨 Run 复用。
         return (
             self.is_bound_to(
                 user_id=user_id,
