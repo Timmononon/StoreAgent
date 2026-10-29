@@ -1,5 +1,6 @@
 import { getPublicError } from '@/utils/api';
 
+// 与 backend/threads/contracts.py 的 THREAD_ID_PATTERN 保持一致。
 export const THREAD_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/;
 
 export function isThreadId(value: unknown): value is string {
