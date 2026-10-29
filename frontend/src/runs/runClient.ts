@@ -16,6 +16,7 @@ export function createIdempotencyKey(scope: 'run' | 'resume' = 'run'): string {
   if (typeof randomUUID === 'function') {
     return `${scope}_${randomUUID.call(globalThis.crypto)}`;
   }
+  // 在不支持 randomUUID 的环境中，用递增序号区分同一毫秒内的请求。
   fallbackKeySequence += 1;
   const random = Math.random().toString(36).slice(2, 12);
   return `${scope}_${Date.now().toString(36)}_${fallbackKeySequence.toString(36)}_${random}`;
