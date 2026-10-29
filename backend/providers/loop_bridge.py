@@ -240,6 +240,7 @@ class ProviderLoopBridge:
                 self._stopped.set()
 
     async def _invoke_factory(self, factory: AwaitableFactory[T]) -> T:
+        # 在 Provider loop 内调用 factory，使异步资源归属正确的 event loop。
         produced = factory()
         if not inspect.isawaitable(produced):
             raise TypeError("provider loop factory must return an awaitable")
