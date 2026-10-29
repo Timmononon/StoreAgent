@@ -57,6 +57,7 @@ export const skillDisplayName = (name: string, description = '') => {
   const presentation = presentations[name];
   if (presentation) return presentation.label;
   const summary = chineseSummary(description);
+  // 无可用中文描述时使用通用名称，避免把内部 Skill 标识直接展示给用户。
   if (!summary) return '自定义能力';
   const firstClause = summary.split(/[，,、：:]/u)[0]?.trim() || summary;
   return shorten(firstClause, 10);
