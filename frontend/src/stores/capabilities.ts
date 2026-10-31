@@ -50,6 +50,7 @@ function approvalDraftMatches(
   draft: CapabilityApprovalDraft | null,
   skill: CapabilitySkill | null
 ): boolean {
+  // 复核整个 Tool 集合，防止沿用能力目录变更前的审批草稿。
   return Boolean(
     draft &&
     skill?.available &&
