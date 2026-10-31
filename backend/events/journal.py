@@ -60,6 +60,7 @@ def append_event_in_session(
         attempts=0,
         created_at=created_at,
     )
+    # Event 与待发布通知加入同一事务，提交后才能对外投影。
     db.add_all([row, outbox])
     db.flush()
     return JournalAppend(event=event, outbox_id=outbox.id)
