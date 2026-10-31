@@ -145,6 +145,7 @@ export const useDocumentStore = defineStore('documents', {
         if (!job || job.status === 'failed') return;
         const exists = merged.some((doc) => doc.filename === filename);
         if (!exists) {
+          // 列表暂时缺少正在删除的文件时，保留已有条目以展示清理进度。
           const currentDoc = this.documents.find((doc) => doc.filename === filename);
           if (currentDoc) {
             merged.push(currentDoc);
