@@ -124,6 +124,7 @@ export const useCapabilityAdminStore = defineStore('capability-admin', {
       this.notice = '';
       try {
         await operation();
+        // 删除后重新读取权威控制面，让能力关联与可用性一起更新。
         this.controlPlane = await getCapabilityControlPlane();
         this.notice = notice;
         return this.controlPlane;
