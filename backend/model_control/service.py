@@ -189,6 +189,7 @@ class ModelControlService:
                 stage="assignment",
                 safe_details={"missing_roles": missing},
             )
+        # 将启用的 Assignment 转成独立快照，供新建 Run 冻结模型选择。
         return build_model_catalog_snapshot(
             {
                 role: ModelRuntimeSpec.from_profile(profile)
