@@ -23,6 +23,10 @@
       "gold_chunk_count": 0,
       "matched_gold_chunk_count": 0,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -88,6 +92,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -153,6 +161,10 @@
       "gold_chunk_count": 2,
       "matched_gold_chunk_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": 0.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -218,6 +230,10 @@
       "gold_chunk_count": 2,
       "matched_gold_chunk_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": 0.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -283,6 +299,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -348,6 +368,10 @@
       "gold_chunk_count": 4,
       "matched_gold_chunk_count": 4,
       "metrics": {
+        "all_documents_hit_at_1": 0.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 0.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -413,6 +437,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -478,6 +506,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -543,6 +575,10 @@
       "gold_chunk_count": 0,
       "matched_gold_chunk_count": 0,
       "metrics": {
+        "all_documents_hit_at_1": null,
+        "all_documents_hit_at_10": null,
+        "all_documents_hit_at_3": null,
+        "all_documents_hit_at_5": null,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -608,6 +644,10 @@
       "gold_chunk_count": 0,
       "matched_gold_chunk_count": 0,
       "metrics": {
+        "all_documents_hit_at_1": null,
+        "all_documents_hit_at_10": null,
+        "all_documents_hit_at_3": null,
+        "all_documents_hit_at_5": null,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -673,6 +713,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -738,6 +782,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -803,6 +851,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -868,6 +920,10 @@
       "gold_chunk_count": 0,
       "matched_gold_chunk_count": 0,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -933,6 +989,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -998,6 +1058,10 @@
       "gold_chunk_count": 2,
       "matched_gold_chunk_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": 0.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -1063,6 +1127,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -1128,6 +1196,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -1193,6 +1265,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -1258,6 +1334,10 @@
       "gold_chunk_count": 1,
       "matched_gold_chunk_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": 1.0,
+        "all_documents_hit_at_10": 1.0,
+        "all_documents_hit_at_3": 1.0,
+        "all_documents_hit_at_5": 1.0,
         "answer_correctness": null,
         "answer_relevance": null,
         "completeness": null,
@@ -1474,10 +1554,26 @@
     "profile_fingerprint": "3c28851ecfd9c4c3a67b33cb442deea05ae8e513599d77214a5d9907ba392291",
     "profile_id": "offline-smoke-v1",
     "provenance": "contract_smoke",
-    "rag_source_fingerprint": "56b954e4cd19af58a14e6e736db1bf0716ee4ed2cd6dc10d1d02e34c438e1294",
+    "rag_source_fingerprint": "19b10d3bd3ea212d6c310a3e744df098b3b062588b0ab2ed6ba4de7786b69487",
     "source_mismatch_override": false
   },
   "metrics": {
+    "all_documents_hit_at_1": {
+      "eligible_cases": 18,
+      "value": 0.777777777778
+    },
+    "all_documents_hit_at_10": {
+      "eligible_cases": 18,
+      "value": 1.0
+    },
+    "all_documents_hit_at_3": {
+      "eligible_cases": 18,
+      "value": 0.944444444444
+    },
+    "all_documents_hit_at_5": {
+      "eligible_cases": 18,
+      "value": 1.0
+    },
     "answer_correctness": {
       "eligible_cases": 0,
       "value": null
@@ -1690,6 +1786,22 @@
     "ambiguity": {
       "case_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -1899,6 +2011,22 @@
     "code": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -2108,6 +2236,22 @@
     "comparison": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 0.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -2317,6 +2461,22 @@
     "cross_document": {
       "case_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 2,
+          "value": 0.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 2,
+          "value": 0.5
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -2526,6 +2686,22 @@
     "definition": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -2735,6 +2911,22 @@
     "long_question": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 0.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 0.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -2944,6 +3136,22 @@
     "multi_hop": {
       "case_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 2,
+          "value": 0.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 2,
+          "value": 0.5
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -3153,6 +3361,22 @@
     "near_entity": {
       "case_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 2,
+          "value": 0.5
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -3362,6 +3586,22 @@
     "needs_hitl": {
       "case_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 2,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -3571,6 +3811,22 @@
     "no_knowledge": {
       "case_count": 2,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 0,
+          "value": null
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 0,
+          "value": null
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 0,
+          "value": null
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 0,
+          "value": null
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -3780,6 +4036,22 @@
     "parameter": {
       "case_count": 4,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -3989,6 +4261,22 @@
     "prompt_injection": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -4198,6 +4486,22 @@
     "retrieval_only": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -4407,6 +4711,22 @@
     "rewrite": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -4616,6 +4936,22 @@
     "safety": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -4825,6 +5161,22 @@
     "security": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -5034,6 +5386,22 @@
     "single_fact": {
       "case_count": 3,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 3,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 3,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 3,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 3,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -5243,6 +5611,22 @@
     "source_conflict": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 0.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -5452,6 +5836,22 @@
     "table": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -5661,6 +6061,22 @@
     "time_version": {
       "case_count": 4,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 4,
+          "value": 0.75
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 4,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null
@@ -5870,6 +6286,22 @@
     "typo": {
       "case_count": 1,
       "metrics": {
+        "all_documents_hit_at_1": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_10": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_3": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
+        "all_documents_hit_at_5": {
+          "eligible_cases": 1,
+          "value": 1.0
+        },
         "answer_correctness": {
           "eligible_cases": 0,
           "value": null

@@ -11,6 +11,7 @@ from backend.documents.retrieval import (
     RetrievalSnapshot,
     RetrievalTarget,
 )
+from backend.rag.profiles import RagRetrievalProfile, RagSynthesisStrategy
 from backend.indexing.milvus_client import (
     HybridRetrievalUnsupported,
     get_milvus_store,
@@ -28,6 +29,7 @@ from backend.providers import (
 )
 from backend.providers.runtime import provider_runtime
 from backend.rag.reranking import RerankStage
+from backend.rag.ranking import fuse_ranked_documents, select_diverse_documents
 from pydantic import BaseModel, Field
 from backend.agent.models import ModelRole, model_registry
 from backend.model_control import ModelCatalogSnapshot
@@ -233,13 +235,25 @@ def resolve_candidate_k(top_k: int) -> Tuple[int, Dict[str, Any]]:
     }
 
 
-def retrieval_trace_fields(meta: Dict[str, Any]) -> Dict[str, Any]:
+def retrieval_trace_fields(
+    meta: Dict[str, Any], *, previous: Dict[str, Any] | None = None
+) -> Dict[str, Any]:
     """从 retrieve meta 提取应写入 rag_trace 的检索字段。"""
-    return {
+    fields = {
         key: meta[key]
         for key in RETRIEVAL_TRACE_FIELDS
         if key in meta and meta[key] is not None
     }
+    # A later successful rewrite must not erase an earlier degraded retrieval.
+    fields["retrieval_degraded"] = any(
+        bool(
+            item.get("retrieval_degraded")
+            or item.get("retrieval_degraded_code")
+            or item.get("rerank_fallback_applied")
+        )
+        for item in (previous or {}, meta)
+    )
+    return fields
 
 
 def _effective_score(doc: dict) -> Optional[float]:
@@ -378,23 +392,27 @@ def _auto_merge_candidates(
     *,
     deadline: float | None = None,
     cancellation: Callable[[], bool] | None = None,
+    profile: RagRetrievalProfile | None = None,
 ) -> Tuple[List[dict], Dict[str, Any]]:
     """在完整召回候选上执行 L3→L2→L1 合并；不改变顺序，精排由后续步骤负责。"""
     meta = _empty_merge_meta()
     meta["post_merge_candidate_count"] = len(docs)
-    if not AUTO_MERGE_ENABLED or not docs:
+    enabled = profile.auto_merge_enabled if profile else AUTO_MERGE_ENABLED
+    threshold = profile.auto_merge_threshold if profile else AUTO_MERGE_THRESHOLD
+    meta.update(auto_merge_enabled=enabled, auto_merge_threshold=threshold)
+    if not enabled or not docs:
         return docs, meta
 
     parent_deadline = _bounded_deadline(deadline, VECTOR_TIMEOUT_SECONDS)
     merged_docs, merged_count_l3_l2 = _merge_to_parent_level(
         docs,
-        threshold=AUTO_MERGE_THRESHOLD,
+        threshold=threshold,
         deadline=parent_deadline,
         cancellation=cancellation,
     )
     merged_docs, merged_count_l2_l1 = _merge_to_parent_level(
         merged_docs,
-        threshold=AUTO_MERGE_THRESHOLD,
+        threshold=threshold,
         deadline=parent_deadline,
         cancellation=cancellation,
     )
@@ -462,6 +480,92 @@ def _rerank_documents(
         deadline=stage_deadline,
         cancellation=cancellation,
     )
+
+
+def combine_retrieval_results(
+    query: str,
+    groups: List[List[dict]],
+    *,
+    top_k: int = RETRIEVAL_TOP_K,
+    profile: RagRetrievalProfile | None = None,
+    synthesis_strategy: RagSynthesisStrategy = "source_priority_v1",
+    deadline: float | None = None,
+    cancellation: Callable[[], bool] | None = None,
+) -> Dict[str, Any]:
+    """Select the actual synthesis Evidence from bounded, fused branch results.
+
+    Per-branch retrieval/merge/grading stays unchanged. Rerank the bounded
+    union against the original question once, retaining every returned score
+    until source selection. The existing stage owns payload bounds and fallback.
+    """
+    if cancellation is not None and cancellation():
+        raise asyncio.CancelledError("synthesis selection cancelled")
+    if synthesis_strategy == "concatenate_v1":
+        combined = dedupe_documents([dict(doc) for group in groups for doc in group])
+        for rank, document in enumerate(combined, 1):
+            document["rrf_rank"] = rank
+        return {
+            "docs": combined,
+            "meta": {
+                "retrieval_pipeline": "subquery_concat_v1",
+                "recall_count": sum(len(group) for group in groups),
+                "deduplicated_recall_count": len(combined),
+                "candidate_count": len(combined),
+                "rerank_enabled": False,
+                "rerank_applied": False,
+                "rerank_fallback_applied": False,
+                "rerank_threshold_applied": False,
+                "rerank_skip_reason": "baseline_no_global_rerank",
+                "post_rerank_count": len(combined),
+                "post_threshold_count": len(combined),
+                "retrieval_empty": not combined,
+            },
+        }
+    if synthesis_strategy != "source_priority_v1":
+        raise ValueError("unknown synthesis strategy")
+    candidate_k, candidate_config = resolve_candidate_k(top_k)
+    if profile is not None:
+        top_k, candidate_k = profile.top_k, profile.candidate_k
+        candidate_config = {"candidate_k_source": "frozen_profile"}
+    fused = fuse_ranked_documents(groups)
+    candidates = fused[:candidate_k]
+    rerank_meta: Dict[str, Any]
+    if not candidates or (profile is not None and not profile.rerank_enabled):
+        ranked = candidates
+        rerank_meta = {
+            "rerank_enabled": bool(profile is None or profile.rerank_enabled),
+            "rerank_applied": False,
+            "rerank_fallback_applied": False,
+            "rerank_threshold_applied": False,
+            "rerank_skip_reason": "no_candidates"
+            if not candidates
+            else "profile_disabled",
+            "post_rerank_count": len(ranked),
+        }
+    else:
+        ranked, rerank_meta = _rerank_documents(
+            query=query,
+            docs=candidates,
+            top_k=len(candidates),
+            deadline=deadline,
+            cancellation=cancellation,
+        )
+    selected = select_diverse_documents(ranked, top_k=top_k)
+    return {
+        "docs": selected,
+        "meta": {
+            **rerank_meta,
+            **candidate_config,
+            "retrieval_pipeline": "subquery_rrf_rerank_source_priority_v1",
+            "candidate_k": candidate_k,
+            "retrieval_top_k": top_k,
+            "recall_count": sum(len(group) for group in groups),
+            "deduplicated_recall_count": len(fused),
+            "candidate_count": len(candidates),
+            "post_threshold_count": len(selected),
+            "retrieval_empty": not selected,
+        },
+    }
 
 
 class RewritePlan(BaseModel):
@@ -590,6 +694,7 @@ def _retrieve_target(
     vector_deadline: float,
     cancellation: Callable[[], bool] | None,
     allow_unrouted_adapter: bool,
+    mode: Literal["dense", "hybrid"] = "hybrid",
 ) -> tuple[bool, str, List[dict]]:
     """读取单个 target；hybrid capability 降级只影响这个 target。"""
 
@@ -603,6 +708,16 @@ def _retrieve_target(
             if target.required:
                 raise RuntimeError("required Milvus target collection is missing")
             return True, "missing_optional", []
+        if mode == "dense":
+            documents = _validate_retrieved_documents(
+                store.dense_retrieve(
+                    dense_embedding=dense_embedding,
+                    top_k=candidate_k,
+                    filter_expr=target.filter_expr,
+                    timeout=_remaining_timeout(vector_deadline, VECTOR_TIMEOUT_SECONDS),
+                )
+            )
+            return False, "dense", documents
         try:
             documents = _validate_retrieved_documents(
                 store.hybrid_retrieve(
@@ -668,6 +783,7 @@ def _finalize_retrieval(
     cancellation: Callable[[], bool] | None = None,
     retrieval_degraded_code: str | None = None,
     retrieval_context: Dict[str, Any] | None = None,
+    profile: RagRetrievalProfile | None = None,
 ) -> Dict[str, Any]:
     """生产流水线：召回候选 → Auto-merge → Rerank（top_k）→ 阈值过滤。"""
     deduplicated = dedupe_documents(retrieved)
@@ -675,14 +791,26 @@ def _finalize_retrieval(
         deduplicated,
         deadline=deadline,
         cancellation=cancellation,
+        **({"profile": profile} if profile is not None else {}),
     )
-    reranked_docs, rerank_meta = _rerank_documents(
-        query=query,
-        docs=candidates,
-        top_k=top_k,
-        deadline=deadline,
-        cancellation=cancellation,
-    )
+    if profile is not None and not profile.rerank_enabled:
+        reranked_docs = candidates[:top_k]
+        rerank_meta = {
+            "rerank_enabled": False,
+            "rerank_applied": False,
+            "rerank_fallback_applied": False,
+            "rerank_threshold_applied": False,
+            "rerank_skip_reason": "profile_disabled",
+            "post_rerank_count": len(reranked_docs),
+        }
+    else:
+        reranked_docs, rerank_meta = _rerank_documents(
+            query=query,
+            docs=candidates,
+            top_k=top_k,
+            deadline=deadline,
+            cancellation=cancellation,
+        )
     post_rerank_count = int(rerank_meta.get("post_rerank_count", len(reranked_docs)))
     threshold_applied = bool(rerank_meta.get("rerank_threshold_applied"))
     final_docs = reranked_docs
@@ -717,6 +845,7 @@ def retrieve_documents(
     retrieval_snapshot: RetrievalSnapshot | None = None,
     deadline: float | None = None,
     cancellation: Callable[[], bool] | None = None,
+    profile: RagRetrievalProfile | None = None,
 ) -> Dict[str, Any]:
     tenant_id = _required_tenant_id(tenant_id)
     snapshot = retrieval_snapshot
@@ -730,6 +859,9 @@ def retrieve_documents(
     elif snapshot.tenant_id != tenant_id:
         raise ValueError("retrieval snapshot tenant does not match request tenant")
     candidate_k, candidate_config = resolve_candidate_k(top_k)
+    if profile is not None:
+        top_k, candidate_k = profile.top_k, profile.candidate_k
+        candidate_config = {"candidate_k_source": "frozen_profile"}
     if not snapshot.targets:
         return _finalize_retrieval(
             query=query,
@@ -738,6 +870,7 @@ def retrieve_documents(
             candidate_config=candidate_config,
             top_k=top_k,
             retrieval_mode="catalog_empty",
+            profile=profile,
             deadline=deadline,
             cancellation=cancellation,
             retrieval_context={
@@ -816,6 +949,7 @@ def retrieve_documents(
             vector_deadline=vector_deadline,
             cancellation=cancellation,
             allow_unrouted_adapter=allow_unrouted_adapter,
+            mode=profile.mode if profile else "hybrid",
         )
         if missing:
             optional_missing_count += 1
@@ -835,8 +969,8 @@ def retrieve_documents(
     mode_set = set(active_modes)
     if not active_modes:
         retrieval_mode = "catalog_empty"
-    elif mode_set == {"hybrid"}:
-        retrieval_mode = "hybrid"
+    elif mode_set in ({"hybrid"}, {"dense"}):
+        retrieval_mode = next(iter(mode_set))
     elif mode_set == {"dense_fallback"}:
         retrieval_mode = "dense_fallback"
     else:
@@ -868,4 +1002,5 @@ def retrieve_documents(
         cancellation=cancellation,
         retrieval_degraded_code=degraded_code,
         retrieval_context=retrieval_context,
+        profile=profile,
     )

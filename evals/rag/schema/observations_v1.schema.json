@@ -80,6 +80,19 @@
           ],
           "default": null
         },
+        "judge_duration_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judge Duration Ms"
+        },
         "outcome": {
           "anyOf": [
             {
@@ -114,6 +127,31 @@
             }
           ],
           "default": null
+        },
+        "rag_duration_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rag Duration Ms"
+        },
+        "retrieval_degraded": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retrieval Degraded"
         },
         "retrieved_chunks": {
           "default": [],

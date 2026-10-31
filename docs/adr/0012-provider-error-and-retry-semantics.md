@@ -32,6 +32,7 @@ RAG Module 采用下列语义：
 6. 复杂问题允许部分子查询成功。成功证据与 Provider 故障并存时返回部分结果和 `coverage_gap_codes`；健康空结果与 Provider 故障并存且没有证据时返回 `INSUFFICIENT_EVIDENCE`，不能声称 `NO_KNOWLEDGE`；只有所有子查询均因 Provider 失败时才重抛 typed error。
    只要已有证据但任一规划子问题未被覆盖（包括健康空结果），整体也必须是 partial，并记录 `coverage_gap_questions`。
    若每个分支均返回可用的 answerable/partial 证据，Synthesis 可以复用 Grader 对原问题和合并证据复评一次；仅当证据明确完整覆盖且无歧义时清除覆盖缺口。此复评不重新规划、重写或暂停 HITL；空分支与 Provider 故障不允许通过这种方式提升为完整回答。
+   全局 top_k 选择移除部分证据时，即使分支原先均可回答，也须对实际选中证据复评一次；复评未确认完整覆盖时保留 partial，不能沿用截断前的完整性结论。
 7. HTTP、Run、terminal Event 和前端 reducer 共用同一 `PublicError` 形状；`error` 是唯一权威错误投影。
 8. request-owned Tool Adapter 必须继承 Run deadline 与 cancellation probe。Runtime 路径的 Provider 故障必须抛出 typed error，使 `tool.failed` 与 Run terminal 保持一致。
 9. 已经发布的 partial answer 必须保留，并追加稳定 code 的安全终态说明。

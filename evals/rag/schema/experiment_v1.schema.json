@@ -1,0 +1,120 @@
+{
+  "$defs": {
+    "RagRetrievalProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "auto_merge_enabled": {
+          "default": true,
+          "title": "Auto Merge Enabled",
+          "type": "boolean"
+        },
+        "auto_merge_threshold": {
+          "default": 2,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Auto Merge Threshold",
+          "type": "integer"
+        },
+        "candidate_k": {
+          "default": 30,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Candidate K",
+          "type": "integer"
+        },
+        "mode": {
+          "default": "hybrid",
+          "enum": [
+            "dense",
+            "hybrid"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "rerank_enabled": {
+          "default": true,
+          "title": "Rerank Enabled",
+          "type": "boolean"
+        },
+        "top_k": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Top K",
+          "type": "integer"
+        }
+      },
+      "title": "RagRetrievalProfile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "corpus_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Corpus Fingerprint",
+      "type": "string"
+    },
+    "document_count": {
+      "minimum": 1,
+      "title": "Document Count",
+      "type": "integer"
+    },
+    "index_id": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Index Id",
+      "type": "string"
+    },
+    "knowledge_base_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Knowledge Base Id",
+      "type": "string"
+    },
+    "name": {
+      "enum": [
+        "dense",
+        "hybrid",
+        "hybrid_rerank",
+        "dense_baseline",
+        "hybrid_baseline",
+        "hybrid_rerank_baseline",
+        "hybrid_rerank_optimized"
+      ],
+      "title": "Name",
+      "type": "string"
+    },
+    "retrieval": {
+      "$ref": "#/$defs/RagRetrievalProfile"
+    },
+    "runtime_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Runtime Fingerprint",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "tenant_id",
+    "knowledge_base_id",
+    "corpus_fingerprint",
+    "index_id",
+    "document_count",
+    "retrieval",
+    "runtime_fingerprint"
+  ],
+  "title": "RagExperimentSnapshot",
+  "type": "object"
+}

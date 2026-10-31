@@ -26,7 +26,7 @@ export interface RetrievedChunk {
 export interface RetrievalTargetTrace {
   collection_name: string;
   required: boolean;
-  mode: 'hybrid' | 'dense_fallback' | 'missing_optional';
+  mode: 'dense' | 'hybrid' | 'dense_fallback' | 'missing_optional';
   hit_count: number;
 }
 
@@ -86,6 +86,7 @@ export interface RagTraceFields {
   rerank_retryable?: boolean | null;
   rerank_attempts?: number;
   rerank_fallback_applied?: boolean | null;
+  retrieval_degraded?: boolean | null;
   rerank_timeout_seconds?: number;
   rerank_min_score?: number;
   rerank_threshold_applied?: boolean | null;

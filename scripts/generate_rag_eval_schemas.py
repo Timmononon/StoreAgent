@@ -16,9 +16,13 @@ from backend.evaluation.rag import (  # noqa: E402
     RagEvalObservationBundle,
     RagEvalReport,
 )
+from backend.evaluation.experiments import RagExperimentRequest, RagExperimentSnapshot  # noqa: E402
 
 
 SCHEMAS = {
+    PROJECT_ROOT
+    / "evals/rag/schema/experiment_request_v1.schema.json": RagExperimentRequest,
+    PROJECT_ROOT / "evals/rag/schema/experiment_v1.schema.json": RagExperimentSnapshot,
     PROJECT_ROOT / "evals/rag/schema/dataset_v1.schema.json": RagEvalDataset,
     PROJECT_ROOT / "evals/rag/schema/gates_v1.schema.json": RagEvalGatePolicy,
     PROJECT_ROOT

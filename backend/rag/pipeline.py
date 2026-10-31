@@ -19,7 +19,7 @@ from backend.rag.utils import (
     retrieve_documents,
     resolve_retrieval_snapshot,
     rewrite_query_once,
-    dedupe_documents,
+    combine_retrieval_results,
     retrieval_trace_fields,
 )
 from backend.rag.runtime_context import (
@@ -355,11 +355,20 @@ def _retrieve_for_state(state: RAGState, query: str) -> dict:
         )
     return retrieve_documents(
         query,
-        top_k=RETRIEVAL_TOP_K,
+        top_k=(
+            ctx.rag_retrieval_profile.top_k
+            if ctx and ctx.rag_retrieval_profile
+            else RETRIEVAL_TOP_K
+        ),
         tenant_id=tenant_id,
         retrieval_snapshot=retrieval_snapshot,
         deadline=deadline,
         cancellation=cancellation,
+        **(
+            {"profile": ctx.rag_retrieval_profile}
+            if ctx and ctx.rag_retrieval_profile
+            else {}
+        ),
     )
 
 
@@ -927,7 +936,7 @@ def retrieve_rewritten(state: RAGState) -> RAGState:
             "retrieved_chunks": results,
             "rewrite_retrieved_chunks": results,
             "retrieval_stage": "rewritten",
-            **retrieval_trace_fields(retrieve_meta),
+            **retrieval_trace_fields(retrieve_meta, previous=rag_trace),
         }
     )
     if state.get("step_back_question"):
@@ -1187,8 +1196,18 @@ def _fanout_sub_questions(state: RAGState):
 
 
 def synthesis(state: RAGState) -> RAGState:
-    """合并所有子 Agent 检索到的文档，去重排序后输出最终上下文。"""
-    sub_results = state.get("sub_results", [])
+    """全局融合、选择子问题证据，以同一有界列表生成上下文和 Trace。"""
+    planned_order = {
+        question: index
+        for index, question in enumerate(state.get("sub_questions") or [])
+    }
+    sub_results = sorted(
+        state.get("sub_results", []),
+        key=lambda result: (
+            planned_order.get(result.get("question", ""), len(planned_order)),
+            str(result.get("question") or ""),
+        ),
+    )
     _emit(state, "🔬", f"正在合成 {len(sub_results)} 个子问题的检索结果...")
 
     all_docs: List[dict] = []
@@ -1204,16 +1223,29 @@ def synthesis(state: RAGState) -> RAGState:
         docs = result.get("docs", [])
         all_docs.extend(docs)
 
-    deduped = dedupe_documents(all_docs)
-    for idx, item in enumerate(deduped, 1):
-        item["rrf_rank"] = idx
-
     if provider_failures and len(provider_failures) == len(sub_results):
         raise ProviderError.from_snapshot(provider_failures[0])
 
+    ctx = get_rag_runtime_context(state.get("runtime_context_id"))
+    deadline, cancellation = _provider_runtime(state)
+    combined = combine_retrieval_results(
+        state["question"],
+        [
+            result.get("docs", [])
+            for result in sub_results
+            if result.get("retrieval_status") in ("answerable", "partial")
+        ],
+        profile=ctx.rag_retrieval_profile if ctx else None,
+        synthesis_strategy=ctx.rag_synthesis_strategy if ctx else "source_priority_v1",
+        deadline=deadline,
+        cancellation=cancellation,
+    )
+    deduped = combined["docs"]
+    selection_meta = combined["meta"]
+    _emit_retrieval_warnings(state, selection_meta)
     context = _format_docs(deduped)
     if deduped:
-        _emit(state, "✅", f"合成完成，共 {len(deduped)} 个去重片段")
+        _emit(state, "✅", f"合成完成，选取 {len(deduped)} 个证据片段")
     else:
         _emit(state, "⛔", "所有子问题都没有可用证据")
 
@@ -1240,14 +1272,17 @@ def synthesis(state: RAGState) -> RAGState:
     joint_evidence = None
     if (
         has_docs
-        and uncovered_results
+        and (
+            uncovered_results
+            or len(deduped) < selection_meta["deduplicated_recall_count"]
+        )
         and not provider_failures
         and all(
             result.get("retrieval_status") in ("answerable", "partial")
             for result in sub_results
         )
     ):
-        # 分支各自只有部分证据时，合并后可能互补。只复评一次，不重新规划/检索/HITL。
+        # 分支证据可能互补，也可能在全局有界选择后丢失。复评实际选中证据一次。
         # 真正为空、未解析歧义或 Provider 失败的分支仍保留 coverage gap。
         _emit(state, "📊", "检查合并证据是否完整覆盖原问题")
         joint_grade, joint_evidence = _evaluate_evidence(state, deduped)
@@ -1258,6 +1293,10 @@ def synthesis(state: RAGState) -> RAGState:
         ):
             retrieval_status = "answerable"
             uncovered_results = []
+        else:
+            retrieval_status = "partial"
+            if not uncovered_results:
+                uncovered_results = [{"question": state["question"]}]
     coverage_gap_codes = list(
         dict.fromkeys(
             str(item.get("code")) for item in provider_failures if item.get("code")
@@ -1320,6 +1359,7 @@ def synthesis(state: RAGState) -> RAGState:
 
     rag_trace = {
         **original_trace,
+        **retrieval_trace_fields(selection_meta, previous=original_trace),
         "tool_used": True,
         "tool_name": "search_knowledge_base",
         "query": state["question"],
@@ -1347,6 +1387,9 @@ def synthesis(state: RAGState) -> RAGState:
     if joint_grade is not None and joint_evidence is not None:
         rag_trace.update(
             {
+                "evidence_relevance": joint_grade.relevance,
+                "evidence_answerability": joint_grade.answerability,
+                "evidence_ambiguity": joint_grade.ambiguity,
                 "evidence_reason": joint_grade.reason,
                 "evidence_confidence": joint_grade.confidence,
                 "grader_evidence_characters": joint_evidence.characters,
@@ -1593,7 +1636,7 @@ def _retrieve_resume_query(state: dict) -> dict:
             "hitl_resumed": True,
             "hitl_resume_strategy": "targeted_retrieval",
             "retrieval_stage": "hitl_targeted_retrieval",
-            **retrieval_trace_fields(retrieve_meta),
+            **retrieval_trace_fields(retrieve_meta, previous=rag_trace),
         }
     )
     state.update(

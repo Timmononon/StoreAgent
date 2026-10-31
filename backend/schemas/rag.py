@@ -39,7 +39,7 @@ class RetrievalTargetTrace(StrictSchema):
         pattern=r"^[A-Za-z_][A-Za-z0-9_]{0,159}$",
     )
     required: bool
-    mode: Literal["hybrid", "dense_fallback", "missing_optional"]
+    mode: Literal["dense", "hybrid", "dense_fallback", "missing_optional"]
     hit_count: int = Field(ge=0)
 
 
@@ -96,6 +96,7 @@ class RagTraceFields(StrictSchema):
     post_threshold_count: Optional[int] = None
     retrieval_empty: Optional[bool] = None
     retrieval_degraded_code: Optional[str] = None
+    retrieval_degraded: Optional[bool] = None
     provider_error_code: Optional[str] = None
     provider_error_stage: Optional[str] = None
     coverage_gap_codes: Optional[List[str]] = None

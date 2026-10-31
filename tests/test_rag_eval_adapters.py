@@ -122,6 +122,76 @@ def test_projection_hashes_text_when_manifest_content_hash_is_invalid():
     )
 
 
+def test_identical_passages_in_distinct_documents_preserve_sources_without_double_credit():
+    from backend.evaluation.rag import (
+        RagEvalGatePolicy,
+        RagGoldChunk,
+        RagGoldDocument,
+        dataset_fingerprint,
+        evaluate_rag,
+    )
+
+    digest = "a" * 64
+    case = _case().model_copy(
+        update={
+            "gold_documents": (
+                RagGoldDocument(canonical_name="a.html"),
+                RagGoldDocument(canonical_name="b.html"),
+            ),
+            "gold_chunks": (RagGoldChunk(content_sha256=digest),),
+        }
+    )
+    result = {
+        "rag_trace": {
+            "retrieved_chunks": [
+                {
+                    "chunk_id": "version-a::chunk",
+                    "document_version_id": "version-a",
+                    "content_hash": digest,
+                    "filename": "a.html",
+                },
+                {
+                    "chunk_id": "version-b::chunk",
+                    "document_version_id": "version-b",
+                    "content_hash": digest,
+                    "filename": "b.html",
+                },
+            ]
+        }
+    }
+    observation = observation_from_rag_results(
+        case, initial=result, final=result, duration_ms=1
+    )
+    assert len(observation.retrieved_chunks) == 2
+    dataset = RagEvalDataset(name="shared_passages", cases=(case,))
+    report = evaluate_rag(
+        dataset,
+        RagEvalObservationBundle(
+            dataset_fingerprint=dataset_fingerprint(dataset),
+            observations=(observation,),
+        ),
+        RagEvalGatePolicy(k_values=(1, 2)),
+    )
+    assert report.cases[0].metrics["document_recall_at_2"] == 1
+    assert report.cases[0].metrics["recall_at_2"] == 1
+    assert report.cases[0].metrics["precision_at_2"] == 0.5
+
+
+def test_hash_only_duplicates_still_reject_ambiguous_rankings():
+    from pydantic import ValidationError
+    from backend.evaluation.rag import RagEvalObservation
+
+    with pytest.raises(ValidationError, match="content hashes"):
+        RagEvalObservation(
+            case_id="duplicate_hash",
+            duration_ms=1,
+            retrieved_chunks=(
+                {"rank": 1, "content_sha256": "a" * 64},
+                {"rank": 2, "content_sha256": "a" * 64},
+            ),
+        )
+
+
 def test_projection_rejects_versioned_chunk_without_manifest_hash():
     case = _case()
     result = {
@@ -437,7 +507,8 @@ def test_rag_source_fingerprint_is_stable_and_content_addressed():
 
 
 @pytest.mark.parametrize(
-    "relative", ["agent/models.py", "agent/deepseek.py", "evaluation/runtime.py"]
+    "relative",
+    ["agent/models.py", "agent/deepseek.py", "evaluation/runtime.py", "rag/ranking.py"],
 )
 def test_rag_source_fingerprint_tracks_model_and_judge_changes(tmp_path, relative):
     shutil.copytree(

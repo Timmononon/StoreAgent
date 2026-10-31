@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 from backend.core.errors import AppError, ErrorCode
 from backend.runs.request_context import RunRequestContext
 from backend.providers import ProviderCode, ProviderError, ProviderOperation
+from backend.rag.ranking import fuse_ranked_documents, select_diverse_documents
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,16 +38,13 @@ class FakeStructuredModel:
         return FakeStructuredInvoker(schema, self.handler)
 
 
-def _dedupe_documents(docs):
-    seen = set()
-    out = []
-    for doc in docs:
-        key = doc.get("chunk_id") or doc.get("text")
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(doc)
-    return out
+def _combine_retrieval_results(query, groups, *, profile=None, **kwargs):
+    """Offline ranking seam; Provider behavior is covered by utility tests."""
+    fused = fuse_ranked_documents(groups)
+    return {
+        "docs": select_diverse_documents(fused, top_k=profile.top_k if profile else 5),
+        "meta": {"deduplicated_recall_count": len(fused)},
+    }
 
 
 def load_pipeline(
@@ -102,8 +100,8 @@ def load_pipeline(
         }
     )
     fake_utils.rewrite_query_once = lambda query, **kwargs: rewrite_impl(query)
-    fake_utils.dedupe_documents = _dedupe_documents
-    fake_utils.retrieval_trace_fields = lambda meta: dict(meta)
+    fake_utils.combine_retrieval_results = _combine_retrieval_results
+    fake_utils.retrieval_trace_fields = lambda meta, **_kwargs: dict(meta)
 
     module_name = f"rag_pipeline_under_test_{id(retrieve_documents)}"
     spec = importlib.util.spec_from_file_location(

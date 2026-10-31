@@ -29,6 +29,7 @@ PR-15 之前还没有稳定的 DocumentVersion 与 IndexManifest 身份；当前
 - `NO_KNOWLEDGE` case 不得携带 gold evidence；Provider failure 不能算作正确 abstention。
 - `ANSWERABLE` case 必须至少有一个 gold document 或 gold chunk。
 - case ID、observation case ID 和 rank 必须唯一；未知字段拒绝。
+- Retrieved chunk 有稳定 chunk ID 时按该身份判重，允许不同来源具有相同内容哈希；仅有哈希的记录仍要求哈希唯一。来源文档覆盖保留各文档身份，chunk 排名指标对同一 gold 最多计一次命中，避免因跨文档重复段落中断评测或重复加分。
 - chunk 指标只统计有 gold chunk 的 eligible case，空 gold case 不得稀释分母。
 - critical case 从通过变为失败时零容忍；缺失 observation、执行错误和 eligible case 数下降默认失败。
 - HITL resolution 必须离开等待状态、没有 Provider failure，并命中标注的最终 outcome；最终 `NO_KNOWLEDGE` 不能冒充预期为 `ANSWERABLE` 的成功恢复。
@@ -43,6 +44,12 @@ PR-15 之前还没有稳定的 DocumentVersion 与 IndexManifest 身份；当前
 - JSON 和 Markdown 报告不得包含文档正文、密钥、endpoint、原始异常或私有推理。
 - 每个 Run 与 RAG Evaluation Job 只使用创建时冻结的 Model Snapshot；Model Assignment 变化只影响后续新建工作，不允许执行中热切换或从环境变量重新解析模型。
 - Case 响应只包含问题、生成答案、数值指标、简短 Judge reason、公开 Evidence identity 与稳定错误；不得包含 Evidence 正文、endpoint、Secret、原始异常或私有推理。
+
+## 受控外部基准的实施细节
+
+CRUD-RAG 使用固定来源 revision、文件哈希和 100 题抽样 manifest，gold 仅由严格且唯一的来源对齐产生。按事件及共享文档分组划分 dev/test，不把参考答案或上游 `thoughts` 导入语料。可对齐子集的选择限制必须随报告说明。
+
+同一纯评分 Interface 增加 All sources hit@K 和独立的 RAG/Judge 耗时。文档指标在最终 top-K chunk 内匹配 gold 文档，无精确 gold chunk 的题不计入 chunk ranking 分母。答案与 Judge 使用相同预算的最终证据。受控实验汇总要求 Dataset、源码、模型、corpus/index 和固定参数一致，接受明确的三组检索设计或 A/B/C0/C1 四组优化设计；禁止缺组、混合设计或改写历史实验含义。降级或 Provider 故障标记比较无效。实验只报告测量，不削弱发布 Gate 或生成静态质量结论。
 
 ## 结果
 

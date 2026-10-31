@@ -1,0 +1,50 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "candidate_k": {
+      "default": 30,
+      "maximum": 500,
+      "minimum": 1,
+      "title": "Candidate K",
+      "type": "integer"
+    },
+    "corpus_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Corpus Fingerprint",
+      "type": "string"
+    },
+    "knowledge_base_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Knowledge Base Id",
+      "type": "string"
+    },
+    "name": {
+      "enum": [
+        "dense",
+        "hybrid",
+        "hybrid_rerank",
+        "dense_baseline",
+        "hybrid_baseline",
+        "hybrid_rerank_baseline",
+        "hybrid_rerank_optimized"
+      ],
+      "title": "Name",
+      "type": "string"
+    },
+    "top_k": {
+      "default": 10,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Top K",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "name",
+    "knowledge_base_id",
+    "corpus_fingerprint"
+  ],
+  "title": "RagExperimentRequest",
+  "type": "object"
+}

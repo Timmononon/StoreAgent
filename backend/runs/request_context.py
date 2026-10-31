@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from backend.model_control import ModelCatalogSnapshot
+from backend.rag.profiles import RagRetrievalProfile, RagSynthesisStrategy
 from backend.schemas.rag import HitlResumeState, normalize_rag_trace
 from backend.web_research.citations import (
     WebSourceLedger,
@@ -51,6 +52,10 @@ class RunRequestContext:
     _provider_cancellation_probe: Optional[Callable[[], bool]] = None
     _model_snapshot: ModelCatalogSnapshot | None = field(default=None, repr=False)
     _rag_retrieval_snapshot: object | None = field(default=None, repr=False)
+    _rag_retrieval_profile: RagRetrievalProfile | None = field(default=None, repr=False)
+    _rag_synthesis_strategy: RagSynthesisStrategy = field(
+        default="source_priority_v1", repr=False
+    )
     _web_source_ledger: WebSourceLedger = field(
         default_factory=WebSourceLedger,
         repr=False,
@@ -123,6 +128,33 @@ class RunRequestContext:
     def model_snapshot_payload(self) -> dict | None:
         snapshot = self.model_catalog_snapshot()
         return snapshot.model_dump(mode="json") if snapshot is not None else None
+
+    @property
+    def rag_retrieval_profile(self) -> RagRetrievalProfile | None:
+        return self._rag_retrieval_profile
+
+    @property
+    def rag_synthesis_strategy(self) -> RagSynthesisStrategy:
+        return self._rag_synthesis_strategy
+
+    def configure_rag_retrieval_profile(
+        self,
+        profile: RagRetrievalProfile,
+        *,
+        synthesis_strategy: RagSynthesisStrategy = "source_priority_v1",
+    ) -> None:
+        if synthesis_strategy not in ("concatenate_v1", "source_priority_v1"):
+            raise ValueError("unknown synthesis strategy")
+        with self._lock:
+            if not self._active:
+                raise RuntimeError("request context is closed")
+            if self._rag_retrieval_profile is not None and (
+                self._rag_retrieval_profile != profile
+                or self._rag_synthesis_strategy != synthesis_strategy
+            ):
+                raise ValueError("retrieval profile cannot be rebound")
+            self._rag_retrieval_profile = profile
+            self._rag_synthesis_strategy = synthesis_strategy
 
     def get_or_resolve_rag_retrieval_snapshot(
         self,
@@ -385,3 +417,5 @@ class RunRequestContext:
             self._web_fetch_result_budget_limit = None
             self._web_fetch_result_bytes_claimed = 0
             self._rag_retrieval_snapshot = None
+            self._rag_retrieval_profile = None
+            self._rag_synthesis_strategy = "source_priority_v1"

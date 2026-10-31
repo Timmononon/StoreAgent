@@ -263,6 +263,9 @@ class RagEvalObservation(StrictEvalModel):
     provider_error_code: ProviderCode | None = None
     provider_error_stage: RagProviderErrorStage | None = None
     duration_ms: float = Field(ge=0, allow_inf_nan=False)
+    rag_duration_ms: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    judge_duration_ms: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    retrieval_degraded: bool | None = None
     judge: RagJudgeMetrics | None = None
     retrieved_chunks: tuple[RagRetrievedChunk, ...] = ()
     initial_retrieved_chunks: tuple[RagRetrievedChunk, ...] = ()
@@ -280,8 +283,14 @@ class RagEvalObservation(StrictEvalModel):
                 (chunk.chunk_id for chunk in chunks if chunk.chunk_id),
                 f"{name} chunk ids",
             )
+            # Distinct versioned chunks may contain the same passage. Hashes
+            # act as the identity only when no stable chunk ID is available.
             _require_unique(
-                (chunk.content_sha256 for chunk in chunks if chunk.content_sha256),
+                (
+                    chunk.content_sha256
+                    for chunk in chunks
+                    if chunk.chunk_id is None and chunk.content_sha256
+                ),
                 f"{name} content hashes",
             )
         if not self.rewrite_performed and self.rewrite_retrieved_chunks:
@@ -689,7 +698,7 @@ def render_rag_eval_markdown(report: RagEvalReport) -> str:
 
 
 def _load_json(path: str | Path) -> Any:
-    def reject_constant(value: str):
+    def reject_constant(value: str) -> None:
         raise ValueError(f"non-finite JSON number is not allowed: {value}")
 
     return json.loads(
@@ -779,7 +788,9 @@ def _document_matches(
     )
 
 
-def _ranked(chunks: Sequence[RagRetrievedChunk], k: int | None = None):
+def _ranked(
+    chunks: Sequence[RagRetrievedChunk], k: int | None = None
+) -> list[RagRetrievedChunk]:
     ordered = sorted(chunks, key=lambda item: item.rank)
     if k is None:
         return ordered
@@ -921,9 +932,13 @@ def _score_case(
             metrics[f"document_recall_at_{k}"] = _round(
                 matched_documents / len(case.gold_documents)
             )
+            metrics[f"all_documents_hit_at_{k}"] = float(
+                matched_documents == len(case.gold_documents)
+            )
     else:
         for k in k_values:
             metrics[f"document_recall_at_{k}"] = None
+            metrics[f"all_documents_hit_at_{k}"] = None
 
     largest_k = max(k_values)
     if observation.rewrite_performed and case.gold_chunks:
@@ -964,16 +979,22 @@ def _score_case(
             metrics[metric_name] = None
             checks[f"judge_{metric_name}"] = None
             continue
-        value = getattr(judge, metric_name) if judge is not None else None
-        metrics[metric_name] = _round(value) if value is not None else None
-        if value is None:
+        judge_value = getattr(judge, metric_name) if judge is not None else None
+        metrics[metric_name] = _round(judge_value) if judge_value is not None else None
+        if judge_value is None:
             checks[f"judge_{metric_name}"] = None
         elif higher_is_better:
-            checks[f"judge_{metric_name}"] = value >= threshold
+            checks[f"judge_{metric_name}"] = judge_value >= threshold
         else:
-            checks[f"judge_{metric_name}"] = value <= threshold
+            checks[f"judge_{metric_name}"] = judge_value <= threshold
 
     metrics["duration_ms"] = _round(observation.duration_ms)
+    if observation.retrieval_degraded is not None:
+        metrics["retrieval_degraded"] = float(observation.retrieval_degraded)
+    if observation.rag_duration_ms is not None:
+        metrics["rag_duration_ms"] = observation.rag_duration_ms
+    if observation.judge_duration_ms is not None:
+        metrics["judge_duration_ms"] = observation.judge_duration_ms
     metrics["provider_failed"] = float(observation.provider_error_code is not None)
     applicable_checks = [value for value in checks.values() if value is not None]
     passed = all(applicable_checks) and observation.provider_error_code is None
@@ -1025,9 +1046,9 @@ def _aggregate_metrics(
         ("hitl_final_outcome", "hitl_final_outcome_accuracy"),
     ):
         values = [
-            float(case.checks[check_name])
+            float(check_value)
             for case in cases
-            if case.checks.get(check_name) is not None
+            if (check_value := case.checks.get(check_name)) is not None
         ]
         aggregated[metric_name] = RagMetricResult(
             value=_mean(values),
@@ -1044,6 +1065,21 @@ def _aggregate_metrics(
     aggregated["latency_p95_ms"] = RagMetricResult(
         value=_percentile(durations, 0.95), eligible_cases=len(durations)
     )
+    for field, prefix in (
+        ("rag_duration_ms", "rag_latency"),
+        ("judge_duration_ms", "judge_latency"),
+    ):
+        phase_values = sorted(
+            float(value)
+            for observation in observations.values()
+            if (value := getattr(observation, field)) is not None
+        )
+        if phase_values:
+            for percentile in (50, 95):
+                aggregated[f"{prefix}_p{percentile}_ms"] = RagMetricResult(
+                    value=_percentile(phase_values, percentile / 100),
+                    eligible_cases=len(phase_values),
+                )
     failure_values = [
         float(observation.provider_error_code is not None)
         for observation in observations.values()
@@ -1205,9 +1241,9 @@ def _evaluate_gates(
 
     baseline_metrics = baseline.metrics if baseline is not None else {}
     for gate in sorted(policy.metric_gates, key=lambda item: item.metric):
-        current = metrics.get(gate.metric)
+        current_metric = metrics.get(gate.metric)
         baseline_metric = baseline_metrics.get(gate.metric)
-        result = _evaluate_metric_gate(gate, current, baseline_metric)
+        result = _evaluate_metric_gate(gate, current_metric, baseline_metric)
         results.append(result)
     return results
 

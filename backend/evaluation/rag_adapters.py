@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from backend.evaluation.rag import (
+    RagComplexity,
     RagEvalCase,
     RagEvalDataset,
     RagEvalObservation,
@@ -291,6 +292,7 @@ def rag_source_fingerprint(root: str | Path) -> str:
         "backend/documents/publication.py",
         "backend/documents/retrieval.py",
         "backend/evaluation/runtime.py",
+        "backend/evaluation/experiments.py",
         "backend/indexing/document_loader.py",
         "backend/indexing/embedding.py",
         "backend/indexing/html_processor.py",
@@ -304,6 +306,8 @@ def rag_source_fingerprint(root: str | Path) -> str:
         "backend/rag/evidence.py",
         "backend/rag/outcomes.py",
         "backend/rag/pipeline.py",
+        "backend/rag/profiles.py",
+        "backend/rag/ranking.py",
         "backend/rag/reranking.py",
         "backend/rag/runtime_context.py",
         "backend/rag/utils.py",
@@ -327,6 +331,7 @@ def artifact_tree_fingerprint(path: str | Path) -> str:
     """Hash a controlled corpus using relative paths and exact file bytes."""
 
     root = Path(path)
+    files: tuple[Path, ...]
     if root.is_file():
         files = (root,)
         relative_root = root.parent
@@ -514,9 +519,7 @@ def _route(
 def _complexity(
     result: Mapping[str, Any],
     trace: Mapping[str, Any],
-):
-    from backend.evaluation.rag import RagComplexity
-
+) -> RagComplexity | None:
     value = _first_text(result.get("complexity"), trace.get("complexity"))
     if value is None:
         return None

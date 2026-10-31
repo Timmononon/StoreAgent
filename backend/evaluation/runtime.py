@@ -31,11 +31,13 @@ from backend.providers import (
 from backend.rag.pipeline import resume_rag_from_hitl, run_rag_graph
 from backend.rag.evidence import pack_evidence, rag_evidence_character_budget
 from backend.runs.request_context import RunRequestContext
+from backend.documents.retrieval import RetrievalSnapshot
+from backend.evaluation.experiments import RagExperimentSnapshot
 
 
 _RAG_EVIDENCE_CHARACTER_BUDGET = rag_evidence_character_budget()
 _MAX_ANSWER_CONTEXT_CHARACTERS = min(24_000, _RAG_EVIDENCE_CHARACTER_BUDGET)
-_MAX_JUDGE_EVIDENCE_CHARACTERS = min(18_000, _RAG_EVIDENCE_CHARACTER_BUDGET)
+_MAX_JUDGE_EVIDENCE_CHARACTERS = _MAX_ANSWER_CONTEXT_CHARACTERS
 
 
 class RagJudgeDecision(RagJudgeMetrics):
@@ -76,6 +78,8 @@ class RagEvaluationRuntime:
         model_snapshot: ModelCatalogSnapshot,
         timeout_seconds: float,
         cancellation: Callable[[], bool],
+        experiment: RagExperimentSnapshot | None = None,
+        retrieval_snapshot: RetrievalSnapshot | None = None,
     ) -> RagEvaluationCaseExecution:
         started_at = self.clock()
         deadline = started_at + max(float(timeout_seconds), 0.1)
@@ -83,8 +87,20 @@ class RagEvaluationRuntime:
             user_id="rag_evaluation_worker",
             thread_id=f"{job_id}:{case.id}",
             model_snapshot=model_snapshot,
-            tenant_id=get_settings().app.default_tenant_id,
+            tenant_id=experiment.tenant_id
+            if experiment
+            else get_settings().app.default_tenant_id,
         )
+        if experiment is not None:
+            if (
+                retrieval_snapshot is None
+                or retrieval_snapshot.index_id != experiment.index_id
+            ):
+                raise ValueError("benchmark requires its frozen retrieval snapshot")
+            context.configure_rag_retrieval_profile(
+                experiment.retrieval, synthesis_strategy=experiment.synthesis_strategy
+            )
+            context.get_or_resolve_rag_retrieval_snapshot(lambda: retrieval_snapshot)
         context.configure_provider_runtime(
             deadline_at=deadline,
             cancellation_probe=cancellation,
@@ -94,11 +110,13 @@ class RagEvaluationRuntime:
         generated_answer = ""
         judge_decision: RagJudgeDecision | None = None
         applied_hitl_answers: list[str] = []
+        retrieval_degraded = False
         try:
             if cancellation():
                 raise RuntimeError("RAG evaluation cancelled")
             try:
                 initial = run_rag_graph(case.question, context)
+                retrieval_degraded = self._retrieval_degraded(initial)
                 final = initial
                 for answer in case.hitl_answers:
                     resume_state = final.get("hitl_resume_state")
@@ -111,6 +129,7 @@ class RagEvaluationRuntime:
                         answer,
                         context,
                     )
+                    retrieval_degraded |= self._retrieval_degraded(final)
                     applied_hitl_answers.append(answer)
                 observation = observation_from_rag_results(
                     case,
@@ -136,6 +155,9 @@ class RagEvaluationRuntime:
                 )
 
             documents = self._documents(final or initial)
+            observation = observation.model_copy(
+                update={"retrieval_degraded": retrieval_degraded}
+            )
             if observation.provider_error_code is not None:
                 if observation.provider_error_stage is None:
                     observation = observation.model_copy(
@@ -177,6 +199,12 @@ class RagEvaluationRuntime:
                     documents=documents,
                 )
 
+            judge_started = self.clock()
+            observation = observation.model_copy(
+                update={
+                    "rag_duration_ms": max((judge_started - started_at) * 1000, 0.0),
+                }
+            )
             try:
                 judge_decision = self._judge_answer(
                     question=effective_question,
@@ -192,6 +220,9 @@ class RagEvaluationRuntime:
                     update={
                         "provider_error_code": exc.code.value,
                         "provider_error_stage": RagProviderErrorStage.JUDGE,
+                        "judge_duration_ms": max(
+                            (self.clock() - judge_started) * 1000, 0.0
+                        ),
                     }
                 )
                 return self._execution_result(
@@ -206,7 +237,10 @@ class RagEvaluationRuntime:
                 update={
                     "judge": RagJudgeMetrics.model_validate(
                         judge_decision.model_dump(exclude={"reason"})
-                    )
+                    ),
+                    "judge_duration_ms": max(
+                        (self.clock() - judge_started) * 1000, 0.0
+                    ),
                 }
             )
             return self._execution_result(
@@ -354,6 +388,25 @@ class RagEvaluationRuntime:
             ),
             retrieved_identities=self._retrieved_identities(documents),
             duration_ms=duration_ms,
+        )
+
+    @staticmethod
+    def _retrieval_degraded(result: Mapping[str, object]) -> bool:
+        trace = result.get("rag_trace")
+        if not isinstance(trace, Mapping):
+            return False
+        traces = [trace]
+        for key in ("sub_traces", "sub_results"):
+            children = trace.get(key)
+            if isinstance(children, Sequence) and not isinstance(children, str):
+                traces.extend(child for child in children if isinstance(child, Mapping))
+        return any(
+            bool(
+                item.get("retrieval_degraded")
+                or item.get("retrieval_degraded_code")
+                or item.get("rerank_fallback_applied")
+            )
+            for item in traces
         )
 
     @staticmethod
