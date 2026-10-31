@@ -8,6 +8,7 @@ import json
 import logging
 import signal
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Event
 
 from backend.env import load_env
@@ -31,7 +32,15 @@ def _argument_parser() -> argparse.ArgumentParser:
         description="运行持久化索引 worker 或执行受控清理队列运维操作",
     )
     commands = parser.add_subparsers(dest="command")
-    commands.add_parser("run", help="启动持久化索引 worker（默认）")
+    parser.set_defaults(concurrency=1)
+    run = commands.add_parser("run", help="启动持久化索引 worker（默认）")
+    run.add_argument(
+        "--concurrency",
+        type=int,
+        choices=range(1, 17),
+        default=1,
+        help="同一 Provider Runtime 中的并发任务数（1–16）",
+    )
     list_cleanup = commands.add_parser(
         "list-cleanup",
         help="列出持久化物理清理任务",
@@ -96,6 +105,27 @@ def _run_operator_command(args: argparse.Namespace) -> int:
     raise ValueError(f"unsupported operator command: {args.command}")
 
 
+def _run_workers(concurrency: int, stop_event: Event) -> None:
+    """Each claimer owns its lease; all claimers share one process-owned model."""
+    workers = tuple(IndexingWorker() for _ in range(concurrency))
+    if concurrency == 1:
+        workers[0].run_forever(stop_event)
+        return
+    with ThreadPoolExecutor(
+        max_workers=concurrency, thread_name_prefix="indexing"
+    ) as pool:
+        futures = [pool.submit(worker.run_forever, stop_event) for worker in workers]
+        try:
+            for future in as_completed(futures):
+                future.result()
+                if not stop_event.is_set():
+                    raise RuntimeError(
+                        "indexing worker exited before drain was requested"
+                    )
+        finally:
+            stop_event.set()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _argument_parser().parse_args(argv)
     settings = get_settings()
@@ -110,7 +140,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     stop_event = Event()
 
-    def request_stop(signum, _frame) -> None:
+    def request_stop(signum: int, _frame: object) -> None:
         logger.info("indexing worker draining", extra={"signal": signum})
         stop_event.set()
 
@@ -119,9 +149,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     settings.storage.upload_dir.mkdir(parents=True, exist_ok=True)
     provider_runtime.start_sync()
-    worker = IndexingWorker()
     try:
-        worker.run_forever(stop_event)
+        _run_workers(args.concurrency, stop_event)
         return 0
     finally:
         provider_runtime.close_sync()

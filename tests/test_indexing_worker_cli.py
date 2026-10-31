@@ -4,7 +4,7 @@ import ast
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from threading import Event
+from threading import Barrier, Event, Lock, get_ident
 from types import SimpleNamespace
 
 import pytest
@@ -166,6 +166,88 @@ def test_worker_entry_loads_env_before_importing_runtime_modules():
 
     assert runtime_imports
     assert all(load_env_line < node.lineno for node in runtime_imports)
+
+
+def _install_pool_runtime(monkeypatch, tmp_path, worker_factory):
+    lifecycle = []
+    settings = SimpleNamespace(
+        observability=SimpleNamespace(log_level="INFO"),
+        storage=SimpleNamespace(upload_dir=tmp_path / "uploads"),
+        validate_startup=lambda: None,
+    )
+    monkeypatch.setattr(indexing_cli, "get_settings", lambda: settings)
+    monkeypatch.setattr(indexing_cli, "init_db", lambda: None)
+    monkeypatch.setattr(indexing_cli.signal, "signal", lambda *_: None)
+    monkeypatch.setattr(indexing_cli, "IndexingWorker", worker_factory)
+    monkeypatch.setattr(
+        indexing_cli,
+        "provider_runtime",
+        SimpleNamespace(
+            start_sync=lambda: lifecycle.append("start"),
+            close_sync=lambda: lifecycle.append("close"),
+        ),
+    )
+    return lifecycle
+
+
+def test_concurrent_claimers_share_one_provider_lifecycle(monkeypatch, tmp_path):
+    barrier = Barrier(3)
+    lock = Lock()
+    thread_ids = set()
+    drained = []
+
+    class Worker:
+        def run_forever(self, stop_event):
+            with lock:
+                thread_ids.add(get_ident())
+            barrier.wait(timeout=5)
+            stop_event.set()
+            with lock:
+                drained.append(self)
+
+    lifecycle = _install_pool_runtime(monkeypatch, tmp_path, Worker)
+    assert indexing_cli.main(["run", "--concurrency", "3"]) == 0
+    assert len(thread_ids) == len(drained) == 3
+    assert lifecycle == ["start", "close"]
+
+
+@pytest.mark.parametrize("failure", ["exception", "unexpected_return"])
+def test_pool_failure_drains_other_claimers_before_closing_runtime(
+    monkeypatch, tmp_path, failure
+):
+    barrier = Barrier(2)
+    workers = []
+    drained = Event()
+
+    class Worker:
+        def __init__(self):
+            self.number = len(workers)
+            workers.append(self)
+
+        def run_forever(self, stop_event):
+            barrier.wait(timeout=5)
+            if self.number == 0:
+                if failure == "exception":
+                    raise RuntimeError("injected worker failure")
+                return
+            assert stop_event.wait(timeout=5)
+            drained.set()
+
+    lifecycle = _install_pool_runtime(monkeypatch, tmp_path, Worker)
+    with pytest.raises(RuntimeError, match="worker"):
+        indexing_cli.main(["run", "--concurrency", "2"])
+    assert drained.is_set()
+    assert lifecycle == ["start", "close"]
+
+
+@pytest.mark.parametrize("count", ["0", "17"])
+def test_pool_rejects_unbounded_concurrency_before_starting_providers(
+    monkeypatch, tmp_path, count
+):
+    lifecycle = _install_pool_runtime(monkeypatch, tmp_path, lambda: None)
+    with pytest.raises(SystemExit):
+        indexing_cli.main(["run", "--concurrency", count])
+    assert lifecycle == []
 
 
 class _DrainCatalog:

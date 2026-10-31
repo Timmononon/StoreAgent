@@ -24,6 +24,7 @@ from backend.documents.catalog import (
     DocumentVersionStatus,
     IndexJobStatus,
     ManifestEntry,
+    UploadCandidate,
 )
 
 
@@ -72,6 +73,120 @@ class DocumentCatalogTests(unittest.TestCase):
             processing_profile=profile or BuildProfile(embedding_model="embed-v1"),
             vector_collection="documents_v2",
         )
+
+    def test_batch_reservation_reuses_the_same_candidates_and_jobs(self):
+        uploads = tuple(
+            UploadCandidate(
+                canonical_name=f"news-{number}.html",
+                content_sha256=digest(str(number)),
+                source_object_key=f"objects/news-{number}.html",
+                media_type="text/html",
+                size_bytes=10,
+            )
+            for number in range(3)
+        )
+        arguments = dict(
+            tenant_id="tenant-a",
+            knowledge_base_id=self.knowledge_base.id,
+            owner_id=1,
+            uploads=uploads,
+            processing_profile=BuildProfile(embedding_model="embed-v1"),
+        )
+        first = self.catalog.reserve_uploads(**arguments)
+        second = self.catalog.reserve_uploads(**arguments)
+        self.assertEqual(
+            [item.job.id for item in first], [item.job.id for item in second]
+        )
+        self.assertTrue(all(not item.created for item in second))
+        with self.Session() as db:
+            self.assertEqual(db.query(Document).count(), 3)
+            self.assertEqual(db.query(DocumentVersion).count(), 3)
+            self.assertEqual(db.query(IndexJob).count(), 3)
+
+    def test_invalid_later_upload_rolls_back_the_entire_batch(self):
+        uploads = tuple(
+            UploadCandidate(
+                canonical_name=f"news-{number}.html",
+                content_sha256=digest("valid") if number == 0 else "invalid",
+                source_object_key=f"objects/news-{number}.html",
+                media_type="text/html",
+                size_bytes=10,
+            )
+            for number in range(2)
+        )
+        with self.assertRaises(AppError):
+            self.catalog.reserve_uploads(
+                tenant_id="tenant-a",
+                knowledge_base_id=self.knowledge_base.id,
+                owner_id=1,
+                uploads=uploads,
+                processing_profile=BuildProfile(embedding_model="embed-v1"),
+            )
+        with self.Session() as db:
+            self.assertEqual(db.query(Document).count(), 0)
+            self.assertEqual(db.query(DocumentVersion).count(), 0)
+            self.assertEqual(db.query(IndexJob).count(), 0)
+
+    def test_upload_batch_is_bounded_before_reservation(self):
+        item = UploadCandidate(
+            "news.html", digest("news"), "objects/news.html", "text/html", 4
+        )
+        for uploads in ((), (item,) * 101):
+            with self.assertRaises(ValueError):
+                self.catalog.reserve_uploads(
+                    tenant_id="tenant-a",
+                    knowledge_base_id=self.knowledge_base.id,
+                    owner_id=1,
+                    uploads=uploads,
+                    processing_profile=BuildProfile(embedding_model="embed-v1"),
+                )
+
+    def test_batch_retirement_cancels_jobs_and_preserves_other_documents(self):
+        first = self.reserve("first", name="first.pdf")
+        second = self.reserve("second", name="second.pdf")
+        self.reserve("keep", name="keep.pdf")
+        results = self.catalog.retire_batch(
+            tenant_id="tenant-a",
+            knowledge_base_id=self.knowledge_base.id,
+            canonical_names=("first.pdf", "second.pdf"),
+        )
+        self.assertEqual(len(results), 2)
+        with self.Session() as db:
+            for item in (first, second):
+                self.assertEqual(
+                    db.get(IndexJob, item.job.id).status, IndexJobStatus.CANCELLED
+                )
+                self.assertIsNone(db.get(Document, item.document.id).pending_version_id)
+            self.assertEqual(db.query(DocumentCleanupJob).count(), 2)
+            self.assertEqual(
+                db.query(Document).filter(Document.deleted_at.is_(None)).count(), 1
+            )
+
+    def test_invalid_later_retirement_rolls_back_cancellation_and_cleanup(self):
+        reservation = self.reserve("first", name="first.pdf")
+        with self.assertRaises(AppError):
+            self.catalog.retire_batch(
+                tenant_id="tenant-a",
+                knowledge_base_id=self.knowledge_base.id,
+                canonical_names=("first.pdf", ""),
+            )
+        with self.Session() as db:
+            document = db.get(Document, reservation.document.id)
+            self.assertIsNone(document.deleted_at)
+            self.assertEqual(document.pending_version_id, reservation.version.id)
+            self.assertEqual(
+                db.get(IndexJob, reservation.job.id).status, IndexJobStatus.PENDING
+            )
+            self.assertEqual(db.query(DocumentCleanupJob).count(), 0)
+
+    def test_retirement_batch_is_bounded_before_mutation(self):
+        for names in ((), ("first.pdf",) * 101):
+            with self.assertRaises(ValueError):
+                self.catalog.retire_batch(
+                    tenant_id="tenant-a",
+                    knowledge_base_id=self.knowledge_base.id,
+                    canonical_names=names,
+                )
 
     def stage(self, reservation):
         vector_hash = digest(f"{reservation.version.id}:vector")

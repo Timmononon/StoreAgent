@@ -5,7 +5,8 @@ import json
 import math
 import re
 import unicodedata
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
@@ -241,6 +242,15 @@ class UploadReservation:
     already_current: bool
     publication_fence: int
     expected_current_version_id: str | None
+
+
+@dataclass(frozen=True)
+class UploadCandidate:
+    canonical_name: str
+    content_sha256: str
+    source_object_key: str
+    media_type: str
+    size_bytes: int
 
 
 @dataclass(frozen=True)
@@ -941,6 +951,54 @@ class DocumentCatalog:
         finally:
             db.close()
 
+    def reserve_uploads(
+        self,
+        *,
+        tenant_id: str,
+        knowledge_base_id: str,
+        owner_id: int,
+        uploads: Sequence[UploadCandidate],
+        processing_profile: BuildProfile,
+        vector_collection: str = "",
+        max_attempts: int = 3,
+    ) -> tuple[UploadReservation, ...]:
+        """Commit a bounded batch through the same version reservation rules."""
+        if not 1 <= len(uploads) <= 100:
+            raise ValueError("upload batch must contain 1 to 100 documents")
+        for attempt in range(2):
+            db = self._session_factory()
+            try:
+                with db.begin():
+                    return tuple(
+                        self.reserve_upload(
+                            tenant_id=tenant_id,
+                            knowledge_base_id=knowledge_base_id,
+                            owner_id=owner_id,
+                            canonical_name=item.canonical_name,
+                            content_sha256=item.content_sha256,
+                            source_object_key=item.source_object_key,
+                            media_type=item.media_type,
+                            size_bytes=item.size_bytes,
+                            processing_profile=processing_profile,
+                            vector_collection=vector_collection,
+                            max_attempts=max_attempts,
+                            _transaction_session=db,
+                        )
+                        for item in uploads
+                    )
+            except IntegrityError as exc:
+                if attempt == 0:
+                    continue
+                raise AppError(
+                    ErrorCode.CONFLICT,
+                    "文档批量预留冲突，请重试",
+                    status_code=409,
+                    retryable=True,
+                ) from exc
+            finally:
+                db.close()
+        raise AssertionError("unreachable")
+
     def reserve_upload(
         self,
         *,
@@ -955,6 +1013,7 @@ class DocumentCatalog:
         processing_profile: BuildProfile,
         vector_collection: str = "",
         max_attempts: int = 3,
+        _transaction_session: Session | None = None,
     ) -> UploadReservation:
         tenant = _required_text(tenant_id, "tenant_id", 64)
         knowledge_base_key = _required_text(knowledge_base_id, "knowledge_base_id", 64)
@@ -981,10 +1040,10 @@ class DocumentCatalog:
             ),
         )
         collection = str(vector_collection or "").strip()[:160]
-        for attempt in range(2):
-            db = self._session_factory()
+        for attempt in range(1 if _transaction_session is not None else 2):
+            db = _transaction_session or self._session_factory()
             try:
-                with db.begin():
+                with nullcontext() if _transaction_session is not None else db.begin():
                     knowledge_base = self._knowledge_base(
                         db,
                         tenant_id=tenant,
@@ -1207,6 +1266,8 @@ class DocumentCatalog:
                         expected_current_version_id=document.current_version_id,
                     )
             except IntegrityError as exc:
+                if _transaction_session is not None:
+                    raise
                 db.rollback()
                 if attempt == 0:
                     continue
@@ -1217,7 +1278,8 @@ class DocumentCatalog:
                     retryable=True,
                 ) from exc
             finally:
-                db.close()
+                if _transaction_session is None:
+                    db.close()
         raise AssertionError("unreachable")
 
     @staticmethod
@@ -2498,6 +2560,31 @@ class DocumentCatalog:
         finally:
             db.close()
 
+    def retire_batch(
+        self,
+        *,
+        tenant_id: str,
+        knowledge_base_id: str,
+        canonical_names: Sequence[str],
+    ) -> tuple[RetirementResult, ...]:
+        """Revoke a bounded set through the existing retirement/CAS/cleanup ledger."""
+        if not 1 <= len(canonical_names) <= 100:
+            raise ValueError("retirement batch must contain 1 to 100 documents")
+        db = self._session_factory()
+        try:
+            with db.begin():
+                return tuple(
+                    self.retire(
+                        tenant_id=tenant_id,
+                        knowledge_base_id=knowledge_base_id,
+                        canonical_name=name,
+                        _transaction_session=db,
+                    )
+                    for name in canonical_names
+                )
+        finally:
+            db.close()
+
     def retire(
         self,
         *,
@@ -2505,11 +2592,12 @@ class DocumentCatalog:
         canonical_name: str,
         knowledge_base_id: str | None = None,
         retirement_job_id: str | None = None,
+        _transaction_session: Session | None = None,
     ) -> RetirementResult:
         name = _required_text(canonical_name, "canonical_name", 255)
-        db = self._session_factory()
+        db = _transaction_session or self._session_factory()
         try:
-            with db.begin():
+            with nullcontext() if _transaction_session is not None else db.begin():
                 document = self._document(
                     db,
                     tenant_id=tenant_id,
@@ -2690,7 +2778,8 @@ class DocumentCatalog:
                     retirement_job_id=operation_id,
                 )
         finally:
-            db.close()
+            if _transaction_session is None:
+                db.close()
 
     @staticmethod
     def _cleanup_graph(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +23,7 @@ from backend.documents.catalog import (
     ManifestEntry,
     PublicationResult,
     UploadReservation,
+    UploadCandidate,
 )
 from backend.indexing.document_loader import DocumentArtifactMetadata, DocumentLoader
 from backend.indexing.milvus_client import MilvusSettings
@@ -223,6 +224,40 @@ class DocumentPublication:
         if reservation.version.source_object_key != stored_upload.object_key:
             self._discard_upload(stored_upload)
         return reservation
+
+    def submit_batch(
+        self, uploads: Sequence[StoredUpload], owner_id: int
+    ) -> tuple[UploadReservation, ...]:
+        """Submit up to 100 Jobs atomically, retaining objects on uncertain failure."""
+        if not 1 <= len(uploads) <= 100:
+            raise ValueError("upload batch must contain 1 to 100 documents")
+        knowledge_base = self.catalog.ensure_knowledge_base(
+            tenant_id=self.config.tenant_id,
+            owner_id=owner_id,
+            name=self.config.knowledge_base_name,
+        )
+        reservations = self.catalog.reserve_uploads(
+            tenant_id=self.config.tenant_id,
+            knowledge_base_id=knowledge_base.id,
+            owner_id=owner_id,
+            uploads=tuple(
+                UploadCandidate(
+                    canonical_name=item.original_name,
+                    content_sha256=item.content_sha256,
+                    source_object_key=item.object_key,
+                    media_type=item.media_type,
+                    size_bytes=item.size_bytes,
+                )
+                for item in uploads
+            ),
+            processing_profile=self.config.build_profile,
+            vector_collection=self.config.vector_collection,
+            max_attempts=self.config.max_attempts,
+        )
+        for upload, reservation in zip(uploads, reservations, strict=True):
+            if reservation.version.source_object_key != upload.object_key:
+                self._discard_upload(upload)
+        return reservations
 
     def _discard_upload(self, stored_upload: StoredUpload) -> None:
         root = self.config.upload_dir.resolve()

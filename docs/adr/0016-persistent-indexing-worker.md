@@ -27,6 +27,8 @@ Index Job 与物理清理必须跨 API 重启、多进程和 worker 故障保持
 13. 发布替换产生的 previous current 固定在 publish 后 1 小时才可 claim。用户主动删除、失败、取消、dead-letter 和候选覆盖都以数据库当前时间为 due time，立即可 claim。
 14. worker capability 由 Document Version `build_fingerprint` 表示。非 STAGED job 只分配给 fingerprint 匹配的 worker；STAGED 可由其它 profile 执行 publish-only，但 stored profile 自身 hash 必须一致。
 15. 生产 ledger 固定使用 PostgreSQL；SQLite 只作为单元测试 Adapter。
+16. CLI 可在同一进程以 `run --concurrency N` 启动 1–16 个独立 claimer，默认 1。它们共享一个进程拥有的 Provider Runtime 与 Embedding 模型，各自保留独立 worker identity、lease 和 fence；任一 claimer 异常退出会触发全体 drain，再关闭 Runtime。
+17. 批量上传与 retirement 每批最多 100 项，由 Catalog 在一个事务内复用单项状态转换。批量提交保持内容/构建幂等；批量 retirement 同时撤销发布指针、取消未终结 Index Job，并建立各版本的 cleanup ledger。任何一项失败时整批回滚。
 
 ## 不变量
 

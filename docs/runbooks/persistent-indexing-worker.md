@@ -74,6 +74,8 @@ INDEX_WORKER_READINESS_TTL_SECONDS=45
 
 `INDEX_WORKER_ID` 只是可读前缀；进程入口会追加 host、PID 与随机后缀。两个活跃进程不能共享完整 worker identity。
 
+批量导入可使用 `uv run --no-sync python -m backend.workers.indexing run --concurrency 4`。范围为 1–16，默认 1；同一进程只加载一个 Embedding 模型，多个 claimer 用独立 lease/fence 重叠解析、存储和清理阶段。GPU 并发和 batch 上限仍由 Provider 配置控制，增加 claimer 不会绕过该预算。观察 GPU 显存和索引吞吐后再调整，SIGTERM 会停止全部 claimer 领取新任务。
+
 worker heartbeat 携带当前 Document build fingerprint。API readiness 只统计 fingerprint 匹配的 worker；不匹配的进程不能满足 readiness，也不能领取非 STAGED Index Job。
 
 ## 正常停止与恢复验证
