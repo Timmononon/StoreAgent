@@ -73,6 +73,7 @@ class PersistentEventBus:
         heartbeat_deadline = loop.time() + heartbeat
 
         while True:
+            # Redis 只负责唤醒；每轮读取 Journal，避免通知丢失导致事件缺漏。
             events = await asyncio.to_thread(
                 self.journal.read_after,
                 run_id=run_id,
