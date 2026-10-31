@@ -46,6 +46,7 @@ def _stable_set(values: frozenset[str], *, field_name: str) -> frozenset[str]:
 
 
 def _canonical_fingerprint(payload: object) -> str:
+    # 使用固定 JSON 编码生成策略指纹，避免字段顺序影响审计身份。
     encoded = json.dumps(
         payload,
         ensure_ascii=True,
