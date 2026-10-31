@@ -90,6 +90,7 @@ class OutboxPublisher:
             try:
                 event = RunEventV1.model_validate(item.payload)
                 await self.transport.publish(event)
+                # 发布成功后才落库标记，中断重放的重复通知由 sequence 去重。
                 await asyncio.to_thread(self._mark_published, item.id)
                 published += 1
             except Exception:
