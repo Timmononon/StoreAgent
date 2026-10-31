@@ -332,6 +332,38 @@ test('imports a Dataset, runs automated evaluation, and inspects Report plus Cas
   };
   let datasetCreated = false;
   let jobCreated = false;
+  let benchmarkVisible = false;
+  const benchmarkJob = {
+    ...completedJob,
+    id: 'benchmark-e2e-1',
+    experiment: {
+      schema_version: 1,
+      name: 'hybrid_rerank',
+      tenant_id: 'benchmark',
+      knowledge_base_id: 'kb-benchmark',
+      document_count: 91135,
+      corpus_fingerprint: 'c'.repeat(64),
+      index_id: 'd'.repeat(64),
+      runtime_fingerprint: 'e'.repeat(64),
+      retrieval: {
+        mode: 'hybrid',
+        rerank_enabled: true,
+        top_k: 10,
+        candidate_k: 30,
+        auto_merge_enabled: true,
+        auto_merge_threshold: 2,
+      },
+    },
+    report: {
+      ...completedJob.report,
+      passed: false,
+      metrics: {
+        ...completedJob.report.metrics,
+        document_recall_at_10: { value: 0.7, eligible_cases: 1 },
+        rag_latency_p95_ms: { value: 860, eligible_cases: 1 },
+      },
+    },
+  };
   let datasetCreateRequest: Record<string, unknown> | null = null;
   let jobCreateRequest: Record<string, unknown> | null = null;
 
@@ -352,7 +384,11 @@ test('imports a Dataset, runs automated evaluation, and inspects Report plus Cas
       return;
     }
     if (path === '/v1/rag-evaluations/jobs' && request.method() === 'GET') {
-      await route.fulfill({ json: { jobs: jobCreated ? [completedJob] : [] } });
+      await route.fulfill({
+        json: {
+          jobs: benchmarkVisible ? [benchmarkJob, completedJob] : jobCreated ? [completedJob] : [],
+        },
+      });
       return;
     }
     if (path === '/v1/rag-evaluations/jobs' && request.method() === 'POST') {
@@ -363,6 +399,17 @@ test('imports a Dataset, runs automated evaluation, and inspects Report plus Cas
     }
     if (path === `/v1/rag-evaluations/jobs/${completedJob.id}` && request.method() === 'GET') {
       await route.fulfill({ json: completedJob });
+      return;
+    }
+    if (path === `/v1/rag-evaluations/jobs/${benchmarkJob.id}` && request.method() === 'GET') {
+      await route.fulfill({ json: benchmarkJob });
+      return;
+    }
+    if (
+      path === `/v1/rag-evaluations/jobs/${benchmarkJob.id}/cases` &&
+      request.method() === 'GET'
+    ) {
+      await route.fulfill({ json: { cases: [{ ...completedCase, job_id: benchmarkJob.id }] } });
       return;
     }
     if (
@@ -411,4 +458,21 @@ test('imports a Dataset, runs automated evaluation, and inspects Report plus Cas
   await expect(page.getByText('答案正确说明证据不足，且没有生成无支持事实。')).toBeVisible();
   await expect(page.getByText('document-public-identity')).toBeVisible();
   await expect(page.getByText('chunk-public-identity')).toBeVisible();
+
+  // A CLI-created experiment remains visible without becoming a release baseline.
+  benchmarkVisible = true;
+  await page.getByRole('button', { name: /刷新$/ }).click();
+  await page.getByRole('button').filter({ hasText: 'hybrid_rerank' }).click();
+  await expect(page.getByLabel('对比实验配置')).toContainText('91135 篇文档');
+  await expect(page.getByText('对比实验结果', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('.metric-grid').getByText('Document recall@10', { exact: true })
+  ).toBeVisible();
+  await expect(page.getByLabel('Baseline Job').locator('option')).toHaveCount(2);
+  const releaseOverview = page
+    .getByLabel('RAG 评估概览')
+    .locator('article')
+    .filter({ hasText: 'Gate Pass Rate' });
+  await expect(releaseOverview).toContainText('100%');
+  await expect(releaseOverview).toContainText('1 次普通评测');
 });

@@ -79,6 +79,7 @@ def _job_response(record: RagEvaluationJobRecord) -> RagEvaluationJobResponse:
         progress=record.completed_cases / record.total_cases,
         gate_policy=record.gate_policy,
         model_catalog_hash=record.model_catalog_hash,
+        experiment=record.experiment,
         models=models,
         owner_worker_id=record.owner_worker_id,
         lease_expires_at=record.lease_expires_at,
@@ -180,6 +181,7 @@ async def create_job(
         dataset_id=request.dataset_id,
         gate_policy=request.gate_policy,
         baseline_job_id=request.baseline_job_id,
+        experiment=request.experiment,
     )
     return _job_response(record)
 

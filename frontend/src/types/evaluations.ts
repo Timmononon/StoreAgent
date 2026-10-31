@@ -138,6 +138,7 @@ export interface RagEvaluationJob {
   progress: number;
   gate_policy: RagEvaluationGatePolicy;
   model_catalog_hash: string;
+  experiment?: RagExperimentSnapshot | null;
   models: Record<string, EvaluationModelSummary>;
   owner_worker_id: string | null;
   lease_expires_at: string | null;
@@ -175,6 +176,9 @@ export interface RagEvaluationObservation {
   provider_error_code?: string | null;
   provider_error_stage?: 'retrieval' | 'generation' | 'judge' | null;
   duration_ms: number;
+  rag_duration_ms?: number | null;
+  judge_duration_ms?: number | null;
+  retrieval_degraded?: boolean | null;
   judge?: RagJudgeMetrics | null;
 }
 
@@ -207,4 +211,41 @@ export interface RagEvaluationJobCreatePayload {
   dataset_id: string;
   baseline_job_id?: string | null;
   gate_policy?: RagEvaluationGatePolicy | null;
+  experiment?: RagExperimentRequest | null;
+}
+
+export type RagExperimentName =
+  | 'dense'
+  | 'hybrid'
+  | 'hybrid_rerank'
+  | 'dense_baseline'
+  | 'hybrid_baseline'
+  | 'hybrid_rerank_baseline'
+  | 'hybrid_rerank_optimized';
+
+export interface RagExperimentRequest {
+  name: RagExperimentName;
+  knowledge_base_id: string;
+  corpus_fingerprint: string;
+  top_k?: number;
+  candidate_k?: number;
+}
+
+export interface RagExperimentSnapshot {
+  schema_version: 1;
+  name: RagExperimentName;
+  tenant_id: string;
+  knowledge_base_id: string;
+  corpus_fingerprint: string;
+  index_id: string;
+  document_count: number;
+  runtime_fingerprint: string;
+  retrieval: {
+    mode: 'dense' | 'hybrid';
+    rerank_enabled: boolean;
+    top_k: number;
+    candidate_k: number;
+    auto_merge_enabled: boolean;
+    auto_merge_threshold: number;
+  };
 }

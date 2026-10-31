@@ -63,7 +63,7 @@
         <div>
           <small>Gate Pass Rate</small>
           <strong>{{ gatePassRate }}</strong>
-          <p>最近 {{ evaluationStore.completedJobs.length }} 次成功运行</p>
+          <p>最近 {{ completedGateJobs.length }} 次普通评测</p>
         </div>
       </article>
       <article :class="{ 'is-warning': !modelStore.readyForEvaluation }">
@@ -229,8 +229,11 @@
             </span>
             <span class="job-card-meta">
               <small>{{ formatDate(job.created_at) }}</small>
+              <strong v-if="job.experiment">{{ job.experiment.name }}</strong>
               <strong v-if="job.report" :class="job.report.passed ? 'is-pass' : 'is-fail'">
-                {{ job.report.passed ? 'Gate passed' : 'Gate failed' }}
+                {{
+                  job.experiment ? '对比实验' : job.report.passed ? 'Gate passed' : 'Gate failed'
+                }}
               </strong>
             </span>
           </button>
@@ -313,6 +316,14 @@
             </article>
           </section>
 
+          <p v-if="selectedJob.experiment" class="inline-note" aria-label="对比实验配置">
+            {{ selectedJob.experiment.name }} · {{ selectedJob.experiment.document_count }} 篇文档 ·
+            每次召回候选 {{ selectedJob.experiment.retrieval.candidate_k }} · 子问题 TopK
+            {{ selectedJob.experiment.retrieval.top_k }} · 重排{{
+              selectedJob.experiment.retrieval.rerank_enabled ? '开启' : '关闭'
+            }}
+          </p>
+
           <div class="experiment-tabs" role="tablist" aria-label="Evaluation Job 视图">
             <button
               id="evaluation-report-tab"
@@ -360,8 +371,16 @@
                   ></i
                 ></span>
                 <div>
-                  <small>Quality gate</small>
-                  <strong>{{ selectedJob.report.passed ? '评估通过' : '评估未通过' }}</strong>
+                  <small>{{
+                    selectedJob.experiment ? 'Benchmark experiment' : 'Quality gate'
+                  }}</small>
+                  <strong>{{
+                    selectedJob.experiment
+                      ? '对比实验结果'
+                      : selectedJob.report.passed
+                        ? '评估通过'
+                        : '评估未通过'
+                  }}</strong>
                   <p>
                     {{ selectedJob.report.observation_count }}/{{
                       selectedJob.report.case_count
@@ -893,6 +912,11 @@ const metricLabels: Record<string, string> = {
   precision_at_10: 'Precision@10',
   document_recall_at_5: 'Document recall@5',
   document_recall_at_10: 'Document recall@10',
+  all_documents_hit_at_5: 'All sources hit@5',
+  all_documents_hit_at_10: 'All sources hit@10',
+  rag_latency_p95_ms: 'RAG P95 latency',
+  judge_latency_p95_ms: 'Judge P95 latency',
+  retrieval_degraded: 'Retrieval fallback rate',
 };
 
 const preferredHeadlineMetrics = [
@@ -939,8 +963,11 @@ const selectedDataset = computed(() =>
 const totalDatasetCases = computed(() =>
   evaluationStore.datasets.reduce((total, dataset) => total + dataset.case_count, 0)
 );
+const completedGateJobs = computed(() =>
+  evaluationStore.completedJobs.filter((job) => !job.experiment)
+);
 const gatePassRate = computed(() => {
-  const completed = evaluationStore.completedJobs;
+  const completed = completedGateJobs.value;
   if (!completed.length) return '—';
   const passed = completed.filter((job) => job.report?.passed).length;
   return `${Math.round((passed / completed.length) * 100)}%`;
@@ -956,7 +983,7 @@ const compatibleBaselineJobs = computed(() => {
   const dataset = selectedDataset.value;
   if (!dataset) return [];
   return evaluationStore.completedJobs.filter(
-    (job) => job.dataset_fingerprint === dataset.fingerprint
+    (job) => !job.experiment && job.dataset_fingerprint === dataset.fingerprint
   );
 });
 const canStartEvaluation = computed(
@@ -983,9 +1010,21 @@ const failedGateCount = computed(
 );
 const headlineMetrics = computed(() => {
   const metrics = selectedJob.value?.report?.metrics || {};
+  const preferred = selectedJob.value?.experiment
+    ? [
+        'document_recall_at_10',
+        'all_documents_hit_at_10',
+        'answer_correctness',
+        'groundedness',
+        'completeness',
+        'rag_latency_p95_ms',
+        'retrieval_degraded',
+        'provider_failure_rate',
+      ]
+    : preferredHeadlineMetrics;
   const ordered = [
-    ...preferredHeadlineMetrics,
-    ...Object.keys(metrics).filter((name) => !preferredHeadlineMetrics.includes(name)),
+    ...preferred,
+    ...Object.keys(metrics).filter((name) => !preferred.includes(name)),
   ];
   return ordered
     .filter((name, index) => ordered.indexOf(name) === index && metrics[name])
@@ -1017,7 +1056,11 @@ const trendMetricOptions = computed(() => {
 const trendEntries = computed(() => {
   if (!selectedJob.value) return [];
   return evaluationStore.completedJobs
-    .filter((job) => job.dataset_fingerprint === selectedJob.value?.dataset_fingerprint)
+    .filter(
+      (job) =>
+        job.dataset_fingerprint === selectedJob.value?.dataset_fingerprint &&
+        job.experiment?.name === selectedJob.value?.experiment?.name
+    )
     .map((job) => ({ job, value: job.report?.metrics[trendMetric.value]?.value }))
     .filter(
       (entry): entry is { job: RagEvaluationJob; value: number } => typeof entry.value === 'number'

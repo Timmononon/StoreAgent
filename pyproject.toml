@@ -67,6 +67,25 @@ study = [
     "chromadb>=0.5.5",
     "bilibili-api-python>=17.0.0",
 ]
+gpu = [
+    "torch==2.13.0+cu130 ; sys_platform == 'linux' or sys_platform == 'win32'",
+]
+cpu = [
+    "torch==2.13.0",
+]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
 
 [project.scripts]
 storeagent-auth-cleanup = "backend.auth.cleanup:main"
@@ -140,3 +159,9 @@ fail_under = 80
 precision = 1
 show_missing = true
 skip_covered = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "gpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]

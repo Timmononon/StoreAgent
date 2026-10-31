@@ -7,6 +7,7 @@ from threading import Event, Thread
 from uuid import uuid4
 
 from backend.core.errors import (
+    AppError,
     PublicError,
     public_error_from_exception,
     serialize_public_error,
@@ -26,6 +27,8 @@ from backend.evaluation.repository import (
     rag_evaluation_repository,
 )
 from backend.evaluation.runtime import RagEvaluationRuntime, rag_evaluation_runtime
+from backend.documents.retrieval import DocumentRetrievalScope, RetrievalSnapshot
+from backend.evaluation.experiments import experiment_runtime_fingerprint
 
 
 logger = logging.getLogger(__name__)
@@ -109,10 +112,19 @@ class RagEvaluationWorker:
                     "RAG evaluation failure could not be persisted job_id=%s",
                     claimed.job.id,
                 )
+            origin = exc.__traceback__
+            while origin is not None and origin.tb_next is not None:
+                origin = origin.tb_next
             logger.warning(
-                "RAG evaluation job failed job_id=%s error_code=%s",
+                "RAG evaluation job failed job_id=%s error_code=%s "
+                "error_type=%s origin=%s:%s",
                 claimed.job.id,
                 public_error.code,
+                type(exc).__name__,
+                origin.tb_frame.f_globals.get("__name__", "unknown")
+                if origin is not None
+                else "unknown",
+                origin.tb_lineno if origin is not None else 0,
             )
             return True
         finally:
@@ -126,6 +138,7 @@ class RagEvaluationWorker:
         heartbeat_error: Event,
     ) -> None:
         case_index = {case.id: case for case in claimed.dataset.dataset.cases}
+        snapshot = self._experiment_retrieval_snapshot(claimed)
         while True:
             if heartbeat_error.is_set():
                 raise RuntimeError("RAG evaluation worker lost job ownership")
@@ -156,6 +169,14 @@ class RagEvaluationWorker:
                     heartbeat_error.is_set()
                     or self.repository.cancel_requested(claimed.job.id)
                 ),
+                **(
+                    {
+                        "experiment": claimed.job.experiment,
+                        "retrieval_snapshot": snapshot,
+                    }
+                    if claimed.job.experiment is not None
+                    else {}
+                ),
             )
             self.repository.complete_case(
                 job_id=claimed.job.id,
@@ -180,6 +201,8 @@ class RagEvaluationWorker:
             return
 
         observations = self.repository.observations(claimed.job.id)
+        if claimed.job.experiment is not None:
+            self._experiment_retrieval_snapshot(claimed)
         baseline = self.repository.baseline_report(claimed.job.baseline_job_id)
         report = evaluate_rag(
             claimed.dataset.dataset,
@@ -252,7 +275,43 @@ class RagEvaluationWorker:
             "retrieval_index_ids": retrieval_index_ids,
             "rag_source_fingerprint": rag_source_fingerprint(PROJECT_ROOT),
             "judge_schema_version": 1,
+            **(
+                {"experiment": claimed.job.experiment.model_dump(mode="json")}
+                if claimed.job.experiment is not None
+                else {}
+            ),
         }
+
+    def _experiment_retrieval_snapshot(
+        self, claimed: ClaimedRagEvaluationJob
+    ) -> RetrievalSnapshot | None:
+        experiment = claimed.job.experiment
+        if experiment is None:
+            return None
+        if experiment.runtime_fingerprint != experiment_runtime_fingerprint():
+            raise AppError(
+                "RAG_EVALUATION_PROFILE_CHANGED",
+                "评测 Worker 配置与冻结快照不一致",
+                status_code=409,
+                category="evaluation",
+                stage="experiment",
+            )
+        snapshot = DocumentRetrievalScope().resolve(
+            tenant_id=experiment.tenant_id,
+            knowledge_base_id=experiment.knowledge_base_id,
+        )
+        if (
+            snapshot.index_id != experiment.index_id
+            or snapshot.current_document_count != experiment.document_count
+        ):
+            raise AppError(
+                "RAG_EVALUATION_INDEX_CHANGED",
+                "评测索引已变化，请创建新实验",
+                status_code=409,
+                category="evaluation",
+                stage="experiment",
+            )
+        return snapshot
 
     def _partial_report(
         self,

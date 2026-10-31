@@ -12,6 +12,7 @@ from backend.evaluation.rag import (
     RagEvalReport,
 )
 from backend.model_control import ModelCatalogSnapshot
+from backend.evaluation.experiments import RagExperimentSnapshot
 
 
 class RagEvaluationJobStatus(StrEnum):
@@ -65,6 +66,7 @@ class RagEvaluationJobRecord(EvaluationContract):
     gate_policy: RagEvalGatePolicy
     model_catalog_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     model_snapshot: ModelCatalogSnapshot
+    experiment: RagExperimentSnapshot | None = None
     owner_worker_id: str | None = None
     lease_expires_at: datetime | None = None
     fencing_token: int = Field(ge=0)

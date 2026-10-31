@@ -57,7 +57,7 @@ StoreAgent 不把一次聊天请求视为一个不可恢复的 HTTP 调用，而
   `rerank_fallback_applied` 写入 RAG Trace，不触发另一套检索实现。
 - **低延迟复杂度规划**：明显的短单事实问题由本地规则直接进入检索；其余问题由 Fast 模型一次
   完成复杂度判断。复杂问题同时生成 2-4 个子问题，通过 LangGraph `Send` 并行执行检索与证据
-  评判，最终在 Synthesis 节点去重合成。
+  评判，最终在 Synthesis 节点全局 RRF 融合，按原问题可选重排，并在 top_k 内优先覆盖不同文档、再补充同文档片段。选择后证据不完整时保留 partial。
 - **纠错型 RAG 与单选重写**：Grader 一次结构化判断相关性、可回答性、歧义与 route。证据不足
   时，Fast 模型只选择 Step-back 或 HyDE 中的一种，并只执行一次重写检索和一次复评。
 - **有界澄清与部分回答**：文档缺少细节时先回答已有证据支持的部分，并说明未覆盖范围；
@@ -197,6 +197,32 @@ uv run --frozen python -m backend.tools.registry_cli validate
 
 开发 Compose 只启动 PostgreSQL、Redis、etcd、MinIO、Milvus 和 Attu，不启动应用进程。
 所有发布到宿主机的开发服务端口只监听 `127.0.0.1`；容器之间仍通过 Compose 网络通信。
+
+#### NVIDIA GPU Embedding（可选）
+
+Windows/Linux 的 NVIDIA GPU 环境可使用 `gpu` 可选依赖，安装锁文件中的
+`torch==2.13.0+cu130`。需要兼容 CUDA 13.0 的 NVIDIA 驱动；模型仍通过现有
+Embedding Provider 在本地运行。
+
+在仓库根目录执行：
+
+```bash
+uv sync --locked --extra gpu
+uv run --locked --extra gpu python -c "import torch; print(torch.__version__); assert torch.cuda.is_available(); print(torch.cuda.get_device_name(0))"
+```
+
+将 `.env` 中的 `EMBEDDING_DEVICE` 设为 `cuda`，然后启动应用：
+
+```bash
+uv run --locked --extra gpu python -m backend.launcher
+```
+
+GPU 环境后续执行 `uv sync` 或 `uv run` 时都要保留 `--extra gpu`，包括迁移、评测和
+维护命令。`cpu` 与 `gpu` 是互斥的安装选项；需要明确使用 CPU 包时，先将
+`EMBEDDING_DEVICE` 设为 `cpu`，再执行 `uv sync --locked --extra cpu`。
+省略 `--extra gpu` 不保证保留 CUDA 包。
+`EMBEDDING_DEVICE` 只选择推理设备，不会替 uv 选择安装包。此流程正常校验并同步锁文件，
+无需通过 `--no-sync` 保留手工安装的 CUDA 包。
 
 ### 3. 启动应用
 
@@ -676,6 +702,8 @@ npm run build
 完整 OpenAPI 可在运行中的 `/docs` 查看。
 
 ## RAG 效果评测
+
+外部基准采用 **MultiHop-RAG 的 609 篇原文、固定 100 题（开发 40 / 测试 60）**，默认支持 A（Dense）、B（Hybrid）、C0（原始 Hybrid + Reranker）、C1（优化 Hybrid + Reranker）四组对比，复用现有导入、持久化任务和工作台。A/B/C0 保持原始拼接策略，仅 C1 使用全局融合、原问题重排和来源优先选择；模型、语料和故障修复共用。历史三组设计仍可显式选择。准备数据不调用模型；真实评测需要完整索引和重排服务，测试阶段共 60 × 4 次 Case。命令及对比边界见 [MultiHop-RAG 评测 Runbook](docs/runbooks/multihop-rag-benchmark.md)。[CRUD-RAG 流程](docs/runbooks/crud-rag-benchmark.md)保留供研究使用，其全量 91,135 篇索引不作为当前默认方案。
 
 仓库保留了小型、版本化的 RAG Dataset、受控语料、离线 Observation、baseline 和质量 Gate。
 这些资产属于产品功能和 CI 门禁，不是临时测试产物。

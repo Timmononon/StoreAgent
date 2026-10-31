@@ -11,6 +11,10 @@
 - `live_gates_v1.json`：只接受生产图 `live_rag` provenance 的门禁。
 - `baseline_v1.json`：由 Dataset + offline Observation + Gate 确定性生成的 baseline。
 - `schema/`：从后端 Pydantic 模型生成的 Dataset/Observation/Gate/Report JSON Schema。
+- `crud_rag_100_v1.manifest.json`：固定外部来源和 100 题抽样；下载/语料/真实运行产物不提交，命令见 `../../docs/runbooks/crud-rag-benchmark.md`。
+- `multihop_rag_100_v2.manifest.json`：默认外部基准，固定 609 篇原文、四类各 25 题，分层开发 40 / 测试 60；v1 保留历史，命令和共享语料边界见 `../../docs/runbooks/multihop-rag-benchmark.md`。
+
+MultiHop 默认使用 `--design optimization` 的 A/B/C0/C1 四组：A/B/C0 冻结原始拼接策略，C1 使用融合/原问题重排/来源选择。原 `retrieval` 三组标识含义保持不变。不能混合两种设计，不能用开发集分数充当测试集优化前基线。
 
 离线 baseline 只证明数据契约、指标和 Gate 可重建，不代表真实模型、Milvus、Document Version 或生产知识库质量。
 
@@ -53,7 +57,7 @@ uv run --no-sync python scripts/evaluate_rag.py score \
 cmp /tmp/rebuilt-rag-baseline.json evals/rag/baseline_v1.json
 ```
 
-真实发布检查使用 `run`、显式 `profile-id`/`index-id`、受控模型和隔离 Milvus/Document Version。一次进程只运行一个 profile；配置变化后启动新进程，不在运行中热切换。
+真实发布检查使用 `run`、显式 `profile-id`/`index-id`、受控模型和隔离 Milvus/Document Version。该 CLI 一次进程只运行一个 profile；配置变化后启动新进程，不在运行中热切换。持久化三组对比使用 Job 冻结的实验配置和 request context，不修改全局 Provider 或检索配置。
 
 ## 修改 Dataset
 

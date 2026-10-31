@@ -634,6 +634,7 @@ class RagEvaluationJob(Base):
     completed_cases: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_cases: Mapped[int] = mapped_column(Integer, nullable=False)
     gate_policy_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    experiment_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     model_catalog_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)
     model_snapshot_json: Mapped[dict] = mapped_column(JSON, nullable=False)
     owner_worker_id: Mapped[str | None] = mapped_column(String(128), nullable=True)

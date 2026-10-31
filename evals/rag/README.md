@@ -2,6 +2,8 @@
 
 本目录保存版本化、可离线复现的 RAG 评测资产。
 
+默认外部基准 MultiHop-RAG 使用固定的 `multihop_rag_100_v2.manifest.json`，保存来源 revision、文件哈希、609 篇语料和 100 题抽样 identity。原始数据、本地 Dataset 和运行产物位于 `.artifacts/multihop-rag/`。三组持久任务、共享语料的划分边界和命令见 [MultiHop-RAG Runbook](../../docs/runbooks/multihop-rag-benchmark.md)。CRUD-RAG 的固定 `crud_rag_100_v1.manifest.json` 和[原流程](../../docs/runbooks/crud-rag-benchmark.md)保留，其全量索引不作为默认方案。
+
 ## 目录
 
 - `rag_smoke_v1.json`：受控 Orion 语料的人工标注 smoke Dataset。

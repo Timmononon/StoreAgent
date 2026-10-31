@@ -14,6 +14,7 @@ from backend.evaluation.rag import (
     RagEvalObservation,
     RagEvalReport,
 )
+from backend.evaluation.experiments import RagExperimentRequest, RagExperimentSnapshot
 
 
 class EvaluationSchema(BaseModel):
@@ -43,6 +44,7 @@ class RagEvaluationJobCreateRequest(EvaluationSchema):
     dataset_id: str = Field(min_length=1, max_length=64)
     baseline_job_id: str | None = Field(default=None, max_length=64)
     gate_policy: RagEvalGatePolicy | None = None
+    experiment: RagExperimentRequest | None = None
 
 
 class EvaluationModelSummary(EvaluationSchema):
@@ -68,6 +70,7 @@ class RagEvaluationJobResponse(EvaluationSchema):
     progress: float = Field(ge=0, le=1)
     gate_policy: RagEvalGatePolicy
     model_catalog_hash: str
+    experiment: RagExperimentSnapshot | None = None
     models: dict[str, EvaluationModelSummary]
     owner_worker_id: str | None = None
     lease_expires_at: datetime | None = None

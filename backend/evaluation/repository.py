@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import nullcontext
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -40,6 +41,7 @@ from backend.evaluation.rag import (
 )
 from backend.infra.database import SessionLocal
 from backend.model_control import ModelCatalogSnapshot
+from backend.evaluation.experiments import RagExperimentSnapshot
 
 
 SessionFactory = Callable[[], Session]
@@ -108,6 +110,11 @@ class RagEvaluationRepository:
             model_snapshot = ModelCatalogSnapshot.model_validate(
                 row.model_snapshot_json
             )
+            experiment = (
+                RagExperimentSnapshot.model_validate(row.experiment_json)
+                if row.experiment_json is not None
+                else None
+            )
             report = (
                 RagEvalReport.model_validate(row.report_json)
                 if row.report_json is not None
@@ -142,6 +149,7 @@ class RagEvaluationRepository:
             gate_policy=policy,
             model_catalog_hash=row.model_catalog_hash,
             model_snapshot=model_snapshot,
+            experiment=experiment,
             owner_worker_id=row.owner_worker_id,
             lease_expires_at=row.lease_expires_at,
             fencing_token=row.fencing_token,
@@ -293,10 +301,12 @@ class RagEvaluationRepository:
         model_snapshot: ModelCatalogSnapshot,
         baseline_job_id: str | None = None,
         max_attempts: int = 3,
+        experiment: RagExperimentSnapshot | None = None,
+        _transaction_session: Session | None = None,
     ) -> RagEvaluationJobRecord:
-        db = self._session_factory()
+        db = _transaction_session or self._session_factory()
         try:
-            with db.begin():
+            with nullcontext() if _transaction_session is not None else db.begin():
                 user = self._user(db, username)
                 dataset = (
                     db.query(RagEvaluationDatasetRow)
@@ -329,10 +339,12 @@ class RagEvaluationRepository:
                         baseline.dataset_id != dataset.id
                         or baseline.status != RagEvaluationJobStatus.SUCCEEDED.value
                         or baseline.report_json is None
+                        or baseline.experiment_json is not None
+                        or experiment is not None
                     ):
                         raise AppError(
                             ErrorCode.CONFLICT,
-                            "Baseline 必须是同一数据集的成功 Evaluation Job",
+                            "Baseline 必须是同一数据集的成功普通 Evaluation Job，不能混用对比实验",
                             status_code=409,
                             category="evaluation",
                             stage="baseline",
@@ -347,6 +359,9 @@ class RagEvaluationRepository:
                     completed_cases=0,
                     total_cases=len(validated_dataset.cases),
                     gate_policy_json=gate_policy.model_dump(mode="json"),
+                    experiment_json=(
+                        experiment.model_dump(mode="json") if experiment else None
+                    ),
                     model_catalog_hash=model_snapshot.catalog_hash,
                     model_snapshot_json=model_snapshot.model_dump(mode="json"),
                     fencing_token=0,
@@ -376,6 +391,36 @@ class RagEvaluationRepository:
                     )
                 db.flush()
                 return self._job_record(job, dataset, user.username)
+        finally:
+            if _transaction_session is None:
+                db.close()
+
+    def create_comparison_jobs(
+        self,
+        *,
+        username: str,
+        dataset_id: str,
+        gate_policy: RagEvalGatePolicy,
+        model_snapshot: ModelCatalogSnapshot,
+        experiments: tuple[RagExperimentSnapshot, ...],
+        max_attempts: int,
+    ) -> tuple[RagEvaluationJobRecord, ...]:
+        """Publish all arms atomically, so an incomplete cohort cannot run."""
+        db = self._session_factory()
+        try:
+            with db.begin():
+                return tuple(
+                    self.create_job(
+                        username=username,
+                        dataset_id=dataset_id,
+                        gate_policy=gate_policy,
+                        model_snapshot=model_snapshot,
+                        experiment=experiment,
+                        max_attempts=max_attempts,
+                        _transaction_session=db,
+                    )
+                    for experiment in experiments
+                )
         finally:
             db.close()
 

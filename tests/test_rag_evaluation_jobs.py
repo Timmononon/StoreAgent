@@ -380,7 +380,7 @@ class _CrashAfterFirstRuntime(_SuccessfulRuntime):
     def execute_case(self, *, case, **kwargs):
         self.calls += 1
         if self.calls == 2:
-            raise RuntimeError("simulated worker crash")
+            raise RuntimeError("simulated worker crash token=private-test-payload")
         return super().execute_case(case=case, **kwargs)
 
 
@@ -396,7 +396,8 @@ def test_worker_failure_persists_partial_report_and_completed_case_metrics():
             worker_id="evaluation-worker-crash",
         )
 
-        assert worker.run_once() is True
+        with patch("backend.evaluation.worker.logger") as failure_logger:
+            assert worker.run_once() is True
 
         failed = service.get_job(job.id)
         assert failed.status is RagEvaluationJobStatus.FAILED
@@ -418,6 +419,12 @@ def test_worker_failure_persists_partial_report_and_completed_case_metrics():
         ]
         assert cases[0].metrics["answer_correctness"] == 0.95
         assert cases[1].observation is None
+        template, *arguments = failure_logger.warning.call_args.args
+        rendered = template % tuple(arguments)
+        assert "error_type=RuntimeError" in rendered
+        assert "origin=" in rendered
+        assert "private-test-payload" not in rendered
+        assert "simulated worker crash" not in rendered
     finally:
         engine.dispose()
 

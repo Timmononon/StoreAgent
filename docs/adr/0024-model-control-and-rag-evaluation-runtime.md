@@ -35,6 +35,22 @@ ADR-0014 已建立纯评分 Interface、Dataset fingerprint、baseline 和 GateP
 - Case 响应可以包含问题和生成答案，但 Evidence 只暴露稳定 identity；不得暴露正文、endpoint、Secret、原始异常或私有推理。
 - Assignment、Run Snapshot 与 Evaluation Job 各只有一套正式 Interface 和实际 Implementation，遵循 ADR-0023，不保留环境变量热切换或同步在线评估旁路。
 
+## 受控检索对比的实施细节
+
+Evaluation Job 可持有无 Secret 的冻结实验配置，明确 Dense/Hybrid 和 Reranker 开关。三组 Job 在一个事务中创建，共享 Model Snapshot、Dataset、corpus/index identity 和其余固定参数；冻结前检查任一配置失败则均不入队。Case 经同一生产 RAG Interface 执行，检索配置与版本过滤快照由 request context 持有，不通过全局变量切换。Worker 执行前后及重领时拒绝索引或运行配置漂移。
+
+普通评测继续使用原有 Gate/baseline；受控对比不能混用发布 baseline，工作台明确标记实验结果。数据库增加可空的 `experiment_json`，历史普通 Job 不改写。
+
+复杂问题的 Synthesis 按规划顺序汇总可用分支，以稳定 chunk/source identity 执行全局 RRF（k=60），候选不超过冻结的 candidate_k；启用 Rerank 的 profile 对原问题和候选全集再评分一次，再选取全局 top_k。选择先保留各 Document Version 的一个片段，再按当前相关性顺序填充剩余位置，不读取 Dataset/gold。去除子问题间不可直接比较的 rerank 分数，保留融合/原问题评分；实际 context、合并 Grader、Answer、Judge 和 Observation 使用同一选中列表。Provider 失败沿用有界降级并写入现有 Trace，不重新召回或重写。
+
+该共享选择逻辑同时用于 Dense、Hybrid、Hybrid + Rerank，源码纳入 fingerprint。调优只使用开发集；更换源码后重跑三组并保留旧报告，跨源码结果仅作开发实验记录，不能冒充同版本发布 Gate。三组规划仍各自调用同一冻结 Fast 模型，因此结果属于端到端系统对比；严格归因 Reranker 需要另外控制相同 query plan/candidate 输入。
+
+用于验证 C 组优化的四组设计使用独立冻结标识：`dense_baseline` / `hybrid_baseline` / `hybrid_rerank_baseline` / `hybrid_rerank_optimized`。前三组显式选择 `concatenate_v1`（原始分支拼接去重，无全局重排/配额），仅 C1 选择 `source_priority_v1`。实验名称唯一确定策略并与检索 profile 同时绑定 RunRequestContext，不能重绑；普通生产请求及原三组名称保持既有优化行为和序列化身份。策略是同一 Synthesis Interface 内的受控实验选择，不是兼容探测、异常 fallback 或第二套图。
+
+四组在同一事务创建、共享冻结模型与索引；比较器拒绝混合设计、缺组、不同源码/模型/语料和失败/降级。报告输出 C0−A、C1−C0 等有符号变化及实际分母。基础故障修复四组共用，不回退 Provider 协议。原策略保留每分支 TopK 后的完整去重列表，优化策略全局有界；上下文预算相同，实际返回量、额外重排/Grader 调用和时延随结果如实报告，不能视为完全相同推理成本。
+
+Evaluation CLI 可用 `--concurrency 1–8` 在同一进程启动独立的 Worker claimer，默认 1。各 claimer 保留独立实例、owner identity、lease/fence 和 Case request context，进程只启动和关闭一次 Provider Runtime；任一 claimer 异常退出触发全体 drain。共享 Embedding 的 GPU 预算和 Reranker 并发 gate 仍生效，不因并发 Job 绕过上限。
+
 ## 结果
 
 ### Provider 协议实施细节
@@ -46,6 +62,8 @@ thinking，并以 `function_calling` 实现 Structured Output，继续使用 Pyd
 持久化私有 reasoning content。模型名称、环境变量变更、Provider 异常都不能触发协议切换；
 其它 Endpoint 保留原 Adapter。SDK 重试仍为 0，由既有 Provider Runtime 统一管理失败。
 Adapter 和模型创建代码纳入 RAG source fingerprint，防止跨协议版本比较 live Report。
+
+Pydantic Structured Output 的非 raw Interface 必须验证解析后的对象，包括 HTTP 成功但未返回所要求 Tool call 的情况。此时不能将 `None` 当作成功交给 Planner/Grader/Judge；Adapter 抛出验证错误，由调用端既有 ProviderExecutor 在原 deadline 内有限重试，耗尽后保留 typed Provider failure，不增加 SDK 或 Adapter 重试。
 
 管理员跨越模型中心的小 Interface，即获得 Profile 生命周期、能力验证、角色分配与新运行快照的 Leverage；运行代码只依赖不可变 Model Snapshot，提高模型选择与恢复语义的 Locality。
 
