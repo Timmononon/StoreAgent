@@ -29,6 +29,7 @@ export const useModelStore = defineStore('models', {
     apiKeyConfigured: (state): boolean => Boolean(state.controlPlane?.api_key_configured),
     readyForEvaluation(): boolean {
       if (!this.apiKeyConfigured || !this.assignments) return false;
+      // 评测还包含规划、证据判断和评分，需要四个角色全部就绪。
       return ['answer', 'fast', 'grader', 'evaluator'].every((role) =>
         Boolean(this.assignments?.[role as ModelRole]?.enabled)
       );
