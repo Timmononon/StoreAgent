@@ -133,6 +133,7 @@ export const useEvaluationStore = defineStore('evaluations', {
 
     async cancelJob(jobId: string) {
       return this.runMutation(async () => {
+        // 取消是异步请求；任务终态继续由服务端状态和后续轮询决定。
         const job = await cancelRagEvaluationJob(jobId);
         const index = this.jobs.findIndex((item) => item.id === job.id);
         if (index >= 0) this.jobs[index] = job;
