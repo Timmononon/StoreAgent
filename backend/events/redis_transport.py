@@ -34,6 +34,7 @@ class RedisEventTransport:
 
     async def publish(self, event: RunEventV1) -> None:
         try:
+            # Stream ID 与持久 sequence 对齐，使 outbox 重放保留同一事件身份。
             await self._get_client().xadd(
                 self._stream_key(event.run_id),
                 {"event": event.model_dump_json()},
