@@ -142,16 +142,18 @@ class ProviderLoopBridgeAsyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.bridge.running)
 
     async def test_cancelling_async_caller_cancels_bridge_work(self):
+        started = threading.Event()
         cleaned_up = threading.Event()
 
         async def slow_call():
             try:
+                started.set()
                 await asyncio.sleep(10)
             finally:
                 cleaned_up.set()
 
         task = asyncio.create_task(self.bridge.call_async(slow_call))
-        await asyncio.sleep(0.02)
+        self.assertTrue(await asyncio.to_thread(started.wait, 1))
         task.cancel()
         with self.assertRaises(asyncio.CancelledError):
             await task

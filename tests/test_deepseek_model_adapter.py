@@ -17,6 +17,14 @@ from backend.model_control import (
     ModelRuntimeSpec,
     build_model_catalog_snapshot,
 )
+from backend.providers import (
+    ProviderCallContext,
+    ProviderCode,
+    ProviderError,
+    ProviderExecutor,
+    ProviderOperation,
+    ProviderPolicy,
+)
 
 
 class ProbeDecision(BaseModel):
@@ -26,7 +34,7 @@ class ProbeDecision(BaseModel):
 @pytest.fixture
 async def model_transport(monkeypatch):
     requests = []
-    response_state = {"status": "ok", "reject": False}
+    response_state = {"status": "ok", "reject": False, "empty_responses": 0}
     created_models = []
 
     def reject_network(*args, **kwargs):
@@ -60,7 +68,9 @@ async def model_transport(monkeypatch):
             )
         message = {"role": "assistant", "content": "OK"}
         finish_reason = "stop"
-        if body.get("tools"):
+        if response_state["empty_responses"]:
+            response_state["empty_responses"] -= 1
+        elif body.get("tools"):
             name = body["tools"][0]["function"]["name"]
             message = {
                 "role": "assistant",
@@ -219,6 +229,49 @@ async def test_deepseek_keeps_schema_validation_and_does_not_retry_bad_output(
         )
 
     assert len(requests) == 1
+
+
+async def test_missing_structured_tool_output_is_rejected_without_adapter_retry(
+    model_transport,
+):
+    create_model, requests, response_state = model_transport
+    response_state["empty_responses"] = 1
+    with pytest.raises(ValidationError):
+        await (
+            create_model().with_structured_output(ProbeDecision).ainvoke("Set status.")
+        )
+    assert len(requests) == 1
+
+
+@pytest.mark.parametrize("empty_responses", [1, 2])
+async def test_missing_structured_output_uses_only_the_provider_retry_owner(
+    model_transport, empty_responses
+):
+    create_model, requests, response_state = model_transport
+    response_state["empty_responses"] = empty_responses
+    structured = create_model().with_structured_output(ProbeDecision)
+    executor = ProviderExecutor()
+    context = ProviderCallContext(
+        provider="deepseek", operation=ProviderOperation.MODEL
+    )
+    policy = ProviderPolicy(
+        max_attempts=2, initial_backoff_seconds=0, max_backoff_seconds=0
+    )
+    if empty_responses == 1:
+        result = await executor.acall(
+            lambda: structured.ainvoke("Set status."), context=context, policy=policy
+        )
+        assert result == ProbeDecision(status="ok")
+    else:
+        with pytest.raises(ProviderError) as failure:
+            await executor.acall(
+                lambda: structured.ainvoke("Set status."),
+                context=context,
+                policy=policy,
+            )
+        assert failure.value.code == ProviderCode.MODEL_UNAVAILABLE
+        assert failure.value.attempts == 2
+    assert len(requests) == 2
 
 
 async def test_deepseek_does_not_switch_protocol_or_retry_bad_requests(model_transport):
