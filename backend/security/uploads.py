@@ -250,6 +250,7 @@ def _store_upload_stream(
             )
         media_type = _sniff_media_type(extension, bytes(head))
         _validate_saved_document(temporary_path, extension, policy)
+        # 内容校验通过后再原子更名，避免正式路径暴露未验证的文件。
         os.replace(temporary_path, final_path)
         return StoredUpload(
             original_name=original_name,
