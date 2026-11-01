@@ -684,6 +684,7 @@ class ToolRegistry:
             return None if registration is None else registration.exposure
 
     def authorize(self, name: str, access: ToolAccess) -> bool:
+        # 描述和搜索共用授权规则，避免通过能力发现泄露未授权 Tool 的 Schema。
         with self._lock:
             registration = self._registrations.get(name)
             if registration is None:
