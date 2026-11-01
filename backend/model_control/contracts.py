@@ -116,6 +116,7 @@ class ModelCatalogSnapshot(BaseModel):
 
 
 def model_catalog_hash(assignments: dict[ModelRole, ModelRuntimeSpec]) -> str:
+    # 固定角色顺序与序列化方式，确保相同 Assignment 得到相同快照身份。
     payload = {
         role.value: assignments[role].model_dump(mode="json")
         for role in sorted(assignments, key=lambda value: value.value)
