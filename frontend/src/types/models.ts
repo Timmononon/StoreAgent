@@ -25,6 +25,7 @@ export interface ModelRoleRequirement {
 export interface ModelControlPlane {
   schema_version: 1;
   catalog_hash: string;
+  // 凭据原值由服务端持有，前端只接收是否已配置。
   api_key_configured: boolean;
   profiles: ModelProfile[];
   assignments: Record<ModelRole, ModelProfile | null>;
