@@ -4,6 +4,7 @@ export interface DocumentItem {
   chunk_count: number;
   document_id?: string;
   current_version_id?: string | null;
+  // 候选版本构建并发布成功后，才会替换 current_version_id。
   pending_version_id?: string | null;
   version_number?: number | null;
   status?: string;
