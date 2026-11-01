@@ -17,6 +17,7 @@ export async function getCapabilityCatalog(): Promise<CapabilityCatalogResponse>
 }
 
 async function controlRequest<T>(request: Promise<{ data: T }>): Promise<T> {
+  // 统一转换为公开错误，供各控制面 Store 采用相同的异常处理规则。
   try {
     return (await request).data;
   } catch (error) {
