@@ -51,6 +51,7 @@ export interface RunStreamReservation {
 }
 
 export interface RunResumeRequest {
+  // HITL 续跑绑定已有 Checkpoint，通过 token 校验同一暂停点。
   hitl_token: string;
   answer: string;
   idempotency_key: string;
