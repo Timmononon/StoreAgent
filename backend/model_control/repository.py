@@ -275,6 +275,7 @@ class ModelControlRepository:
                     .filter(ModelAssignment.profile_id == profile.id)
                     .first()
                 )
+                # 先解除角色分配才能删除 Profile，避免出现悬空的 Assignment。
                 if assigned is not None:
                     raise AppError(
                         ErrorCode.CONFLICT,
