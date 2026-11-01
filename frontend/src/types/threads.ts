@@ -37,6 +37,7 @@ export interface ThreadMessage {
 
 export interface ThreadMessagePage {
   messages: ThreadMessage[];
+  // 使用 Message sequence 获取更早消息；null 表示没有上一页。
   previous_cursor: number | null;
 }
 
