@@ -231,6 +231,7 @@ class SqlPolicyCompiler:
                 "SQL query could not be parsed",
             ) from exc
 
+        # 只接受一个非空语句，防止附加 SQL 绕过后续的单查询审查。
         statements = [statement for statement in parsed if statement is not None]
         if len(statements) != 1:
             code = (
