@@ -261,6 +261,7 @@ api.interceptors.response.use(
     const expectedUsername = config._authRequestUsername;
     try {
       const session = await refreshAuthSession();
+      // 刷新可能跨越退出或账号切换，重试前需确认响应仍属于当前会话。
       const activeSession = getAuthSession();
       if (
         !activeSession ||
