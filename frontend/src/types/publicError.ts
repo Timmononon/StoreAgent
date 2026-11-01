@@ -150,6 +150,7 @@ export function normalizePublicErrorInfo(
   const code = rawCode && CODE_PATTERN.test(rawCode) ? rawCode : 'INTERNAL_ERROR';
   const category = safeString(source.category ?? defaults.category, 64);
   const serverMessage = safeString(source.message ?? defaults.message, 500);
+  // Provider 等受控错误使用本地固定文案，避免上游响应细节进入界面。
   const message =
     category === 'provider' || PROVIDER_CODES.has(code) || FIXED_CLIENT_MESSAGE_CODES.has(code)
       ? publicErrorMessage(code)
