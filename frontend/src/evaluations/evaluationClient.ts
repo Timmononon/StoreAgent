@@ -22,6 +22,7 @@ export async function createRagEvaluationDataset(
   dataset: RagEvaluationDataset
 ): Promise<RagEvaluationDatasetRecord> {
   try {
+    // 按 { dataset } 包装导入内容，与后端创建请求的 Schema 保持一致。
     return (await api.post<RagEvaluationDatasetRecord>('/v1/rag-evaluations/datasets', { dataset }))
       .data;
   } catch (error) {
