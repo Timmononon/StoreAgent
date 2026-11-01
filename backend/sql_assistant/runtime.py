@@ -258,6 +258,7 @@ class SqlAssistantRuntime:
             ):
                 return snapshot.catalog, True
 
+            # 缓存失效后的目录加载也持锁，避免并发请求重复拉取或覆盖快照。
             catalog = self._adapter.load_catalog(
                 deadline_at=deadline_at,
                 cancellation_probe=cancellation_probe,
