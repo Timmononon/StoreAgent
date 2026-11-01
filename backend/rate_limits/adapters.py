@@ -88,6 +88,7 @@ class InMemoryRateLimitAdapter:
             self._closed = True
 
 
+# 时间、窗口重置与计费在同一段 Lua 中完成，避免多实例读改写竞争。
 _FIXED_WINDOW_LUA = """
 local key = KEYS[1]
 local limit = tonumber(ARGV[1])
