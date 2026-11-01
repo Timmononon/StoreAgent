@@ -60,6 +60,7 @@ def _availability(
     roles: frozenset[str],
     configured_secret_names: frozenset[str],
 ) -> tuple[bool, AvailabilityReason | None]:
+    # 权限拒绝优先于配置缺失，保持能力不可用原因的判定顺序一致。
     if not descriptor.required_roles.issubset(roles):
         return False, "permission_required"
     if not descriptor.required_secrets.issubset(configured_secret_names):
