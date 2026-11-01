@@ -16,6 +16,7 @@ export async function getModelControlPlane(): Promise<ModelControlPlane> {
 
 export async function createModelProfile(payload: ModelProfilePayload): Promise<ModelControlPlane> {
   try {
+    // 创建响应包含完整控制面，调用方可同步更新 Profile 列表与角色分配视图。
     return (await api.post<ModelControlPlane>('/v1/models', payload)).data;
   } catch (error) {
     throw getPublicError(error);
