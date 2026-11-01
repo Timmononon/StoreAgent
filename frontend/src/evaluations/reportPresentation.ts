@@ -35,6 +35,7 @@ export const metricTrendDomain = (
   const observedMax = Math.max(...observations);
   const observedSpan = observedMax - observedMin;
   const proximitySpan = observedSpan || Math.max(Math.abs(observedMax) * 0.1, 1);
+  // 只纳入靠近观测值的参考线，避免远端阈值把趋势压成一条直线。
   const nearbyReferences = finiteValues(references).filter(
     (value) => value >= observedMin - proximitySpan * 2 && value <= observedMax + proximitySpan * 2
   );
