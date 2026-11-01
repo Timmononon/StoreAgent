@@ -50,6 +50,7 @@ class RateLimiter:
         self._closed = False
 
     def _storage_key(self, *, policy_id: str, client_identity: str) -> str:
+        # 策略 ID 一并纳入 HMAC，隔离配额身份并避免存储原始客户端标识。
         material = (
             "rate-limit-identity-v1\0" + policy_id + "\0" + client_identity
         ).encode("utf-8")
