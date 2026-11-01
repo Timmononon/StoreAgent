@@ -20,6 +20,7 @@ def build_rate_limiter(settings: AppSettings) -> RateLimiter | None:
 
     raw_key = configured.identity_hmac_key.get_secret_value().strip()
     if not raw_key:
+        # 内存适配器只需进程内临时 key；Redis 必须使用跨实例稳定的 key。
         if configured.backend == "redis":
             raise ValueError("Redis Rate Limit requires a stable RATE_LIMIT_HMAC_KEY")
         identity_key: bytes | str = secrets.token_bytes(32)
