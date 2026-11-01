@@ -29,6 +29,7 @@ export const normalizeRagEvaluationDataset = (value: unknown): RagEvaluationData
     if (!isRecord(item.expected)) throw new Error(`Case ${normalizedId} 缺少 expected`);
   });
 
+  // 按去空白后的 ID 查重，并保留条目位置以便修正导入文件。
   const duplicate = [...positionsById].find(([, positions]) => positions.length > 1);
   if (duplicate) {
     const [id, positions] = duplicate;
