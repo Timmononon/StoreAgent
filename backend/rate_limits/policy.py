@@ -130,6 +130,7 @@ class RoutePolicyMatcher:
         for rule in self._rules:
             if rule.matches(method=normalized_method, path=normalized_path):
                 return rule.policy
+        # 未单列的新路由仍进入通用限额，避免新增 API 意外绕过计费。
         return self._fallback
 
 
