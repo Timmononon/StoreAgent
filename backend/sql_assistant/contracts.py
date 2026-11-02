@@ -35,6 +35,7 @@ def _identifier(value: str, *, field: str) -> str:
         raise ValueError(f"{field} must be a non-empty canonical identifier")
     if "." in compact or "\x00" in compact:
         raise ValueError(f"{field} cannot contain dots or NUL bytes")
+    # PostgreSQL 标识符上限按字节计算，多字节字符不能按字符数校验。
     if len(compact.encode("utf-8")) > 63:
         raise ValueError(f"{field} exceeds PostgreSQL's identifier limit")
     return compact
