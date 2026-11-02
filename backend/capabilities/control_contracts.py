@@ -204,6 +204,7 @@ def _validate_headers(
             folded in sensitive or any(marker in folded for marker in sensitive_markers)
         ):
             raise ValueError("sensitive headers must use secret_headers")
+        # Secret Header 仅保存环境变量名，实际值由运行时解析。
         if secret_refs:
             if re.fullmatch(_SECRET_NAME, item) is None:
                 raise ValueError(
