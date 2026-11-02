@@ -93,6 +93,7 @@ export const useModelStore = defineStore('models', {
       this.error = '';
       this.notice = '';
       try {
+        // 使用服务端返回的完整控制面，保持 Profile 与 Assignment 视图一致。
         this.controlPlane = await operation();
         this.notice = notice;
         return this.controlPlane;
