@@ -611,6 +611,7 @@ class PostgresSqlAssistantAdapter:
             connection.isolation_level = IsolationLevel.REPEATABLE_READ
             connection.read_only = True
             connection.deferrable = False
+            # 即使查询成功也回滚，让事务级配置与查询一起结束。
             with connection.transaction(force_rollback=True):
                 with connection.cursor() as cursor:
                     self._configure_transaction(cursor, effective_timeout)
