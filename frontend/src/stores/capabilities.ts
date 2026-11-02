@@ -50,6 +50,7 @@ function approvalDraftMatches(
   draft: CapabilityApprovalDraft | null,
   skill: CapabilitySkill | null
 ): boolean {
+  // 工具集合变化后旧草稿失效，需要用户重新确认当前审批范围。
   return Boolean(
     draft &&
     skill?.available &&
