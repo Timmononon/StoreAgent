@@ -29,6 +29,7 @@ export const normalizeRagEvaluationDataset = (value: unknown): RagEvaluationData
     if (!isRecord(item.expected)) throw new Error(`Case ${normalizedId} 缺少 expected`);
   });
 
+  // 保留输入位置，便于用户在原始 JSON 中定位重复的 Case ID。
   const duplicate = [...positionsById].find(([, positions]) => positions.length > 1);
   if (duplicate) {
     const [id, positions] = duplicate;
