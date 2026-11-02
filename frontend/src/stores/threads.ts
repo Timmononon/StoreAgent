@@ -72,6 +72,7 @@ export const useThreadStore = defineStore('threads', {
     },
 
     async deleteThread(threadId: string) {
+      // 按 Thread 去重删除请求，同时允许删除其他 Thread。
       if (this.deletingThreadIds[threadId]) return null;
       this.deletingThreadIds = { ...this.deletingThreadIds, [threadId]: true };
       try {
