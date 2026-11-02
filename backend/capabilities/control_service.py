@@ -391,6 +391,7 @@ class CapabilityControlService:
             updated_at=current.updated_at,
         )
         settings = self._sql_settings(record)
+        # 启用前验证只读数据库配置，避免把无效配置交给执行阶段。
         if record.enabled:
             self._validate_sql_settings(settings)
         record = record.model_copy(
