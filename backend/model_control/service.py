@@ -221,6 +221,7 @@ class ModelControlService:
             ModelRole.GRADER: model_settings.grade_model.strip(),
             ModelRole.EVALUATOR: model_settings.evaluation_model.strip(),
         }
+        # 环境配置只补齐尚未分配的角色，保留控制面已经保存的选择。
         existing_assignments = self.repository.assignments()
         for role, model_name in role_models.items():
             if not model_name or role in existing_assignments:
