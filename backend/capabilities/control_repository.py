@@ -107,6 +107,7 @@ class CapabilityControlRepository:
 
     @staticmethod
     def _state(db: Session, *, lock: bool = False) -> CapabilityState:
+        # 所有调用方定位同一控制面状态行，需要串行更新时显式请求行锁。
         query = db.query(CapabilityState).filter(CapabilityState.id == "default")
         if lock:
             query = query.with_for_update()
