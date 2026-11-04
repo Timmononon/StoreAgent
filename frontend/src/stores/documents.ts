@@ -57,6 +57,7 @@ const latestJobsByKey = <T extends { job_id: string; updated_at?: string; create
   keyFor: (job: T) => string
 ): T[] => {
   const latest = new Map<string, T>();
+  // 排序副本后按身份取首项，保留调用方数组的原始顺序。
   [...jobs]
     .sort((left, right) => jobTimestamp(right) - jobTimestamp(left))
     .forEach((job) => {
