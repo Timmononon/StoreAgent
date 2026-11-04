@@ -73,6 +73,7 @@ export async function listRagEvaluationCases(jobId: string): Promise<RagEvaluati
 
 export async function cancelRagEvaluationJob(jobId: string): Promise<RagEvaluationJob> {
   try {
+    // 采用后端返回的 Job 状态，取消请求被接受后仍可能处于 cancelling。
     return (await api.post<RagEvaluationJob>(`/v1/rag-evaluations/jobs/${jobId}/cancel`)).data;
   } catch (error) {
     throw getPublicError(error);
