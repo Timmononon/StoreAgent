@@ -20,6 +20,7 @@ async function controlRequest<T>(request: Promise<{ data: T }>): Promise<T> {
   try {
     return (await request).data;
   } catch (error) {
+    // 控制面各操作统一转换公开错误，Store 无需解析 Axios 响应结构。
     throw getPublicError(error);
   }
 }
