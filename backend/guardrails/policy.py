@@ -513,6 +513,7 @@ class ToolGuardrail:
             )
         else:
             try:
+                # 基础策略先判定，扩展 Provider 不能放行它已经拒绝的调用。
                 base_directive = self.base_provider.decide(request)
                 if not isinstance(base_directive, GuardrailDirective):
                     raise TypeError("base provider returned an invalid directive")
