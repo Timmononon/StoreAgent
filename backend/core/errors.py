@@ -81,6 +81,7 @@ def _safe_retry_after(value: Any) -> float | None:
         seconds = float(value)
     except (TypeError, ValueError):
         return None
+    # 无效的等待时间不进入公开重试提示，避免客户端收到 NaN 或无穷值。
     if not math.isfinite(seconds) or seconds < 0:
         return None
     return seconds
