@@ -283,6 +283,7 @@ class SandboxRuntime:
             effective_deadline = min(local_deadline, float(deadline_at))
         if effective_deadline <= self._monotonic():
             raise SandboxError(SandboxErrorCode.TIMEOUT)
+        # 等待执行槽位也消耗同一个绝对时限，排队后不能重新获得完整预算。
         self._acquire(effective_deadline, cancellation_probe)
         with self._lifecycle_condition:
             if self._closed:
