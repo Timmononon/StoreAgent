@@ -200,6 +200,7 @@ class WebSourceLedger:
         )
 
     def clear(self) -> None:
+        # 来源映射与尝试标志一起清理，避免后续生命周期沿用旧引用身份。
         self._attempted = False
         self._ids_by_url.clear()
         self._sources.clear()
