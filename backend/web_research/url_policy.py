@@ -783,6 +783,7 @@ class WebUrlPolicy:
                 WebUrlPolicyCode.ADDRESS_DENIED,
                 "Connected peer address is not globally routable",
             ) from exc
+        # 连接后的实际对端必须属于本次 DNS 快照，不能只在解析时检查地址。
         if candidate not in resolved.pin.addresses:
             raise WebUrlPolicyError(
                 WebUrlPolicyCode.DNS_PIN_MISMATCH,
