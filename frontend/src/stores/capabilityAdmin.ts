@@ -124,6 +124,7 @@ export const useCapabilityAdminStore = defineStore('capability-admin', {
       this.notice = '';
       try {
         await operation();
+        // 删除接口仅返回结果提示，需重新获取控制面以更新依赖关系视图。
         this.controlPlane = await getCapabilityControlPlane();
         this.notice = notice;
         return this.controlPlane;
