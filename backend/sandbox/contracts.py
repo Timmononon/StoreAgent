@@ -54,6 +54,7 @@ def _positive_int(
     minimum: int = 1,
     maximum: int | None = None,
 ) -> int:
+    # bool 是 int 的子类，但不能作为执行资源预算。
     if isinstance(value, bool) or not isinstance(value, int):
         raise TypeError(f"{field_name} must be an integer")
     if value < minimum or (maximum is not None and value > maximum):
