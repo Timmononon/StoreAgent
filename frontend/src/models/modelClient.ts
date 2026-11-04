@@ -35,6 +35,7 @@ export async function updateModelProfile(
 
 export async function deleteModelProfile(profileId: string): Promise<void> {
   try {
+    // 删除响应没有控制面快照，由 Store 在成功后重新加载。
     await api.delete(`/v1/models/${profileId}`);
   } catch (error) {
     throw getPublicError(error);
