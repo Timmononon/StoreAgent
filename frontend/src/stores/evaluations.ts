@@ -157,6 +157,7 @@ export const useEvaluationStore = defineStore('evaluations', {
     },
 
     startPolling() {
+      // 无活动 Job 时不创建定时器，cancelling 仍需等待服务端终态。
       if (this.pollTimer !== null || !this.activeJobs.length) return;
       this.pollTimer = schedulePoll(async () => {
         this.pollTimer = null;
