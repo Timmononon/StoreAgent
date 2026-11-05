@@ -602,6 +602,7 @@ def _search_registrations(
     if not isinstance(query, str) or not query.strip():
         return ()
 
+    # 先限定可见工具集合再评分，相关性不能扩大本次搜索的授权范围。
     matches: list[tuple[int, _RegisteredTool]] = []
     for name in sorted(allowed_names):
         registration = registrations.get(name)
