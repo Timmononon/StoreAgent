@@ -113,6 +113,7 @@ class ThreadRepository:
         user_id: int,
         thread_id: str,
     ) -> Query[Thread]:
+        # Thread 身份查询同时限定所属用户，避免仅凭 thread_id 跨用户读取。
         return db.query(Thread).filter(
             Thread.user_id == user_id,
             Thread.thread_id == thread_id,
