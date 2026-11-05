@@ -50,6 +50,7 @@ export async function createRun(
       authorization(token)
     )
   );
+  // 响应身份也经过格式校验，防止畸形 Thread ID 流入后续状态与请求。
   requireThreadId(response.run.thread_id);
   return response;
 }
