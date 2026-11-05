@@ -15,6 +15,7 @@ export interface RetrievedChunk {
   chunk_level?: number;
   chunk_idx?: number;
   document_id: string;
+  // 引用绑定不可变版本，避免同一文档更新后误用新版本的分块。
   document_version_id: string;
   section_id: string;
   index_version: string;
