@@ -17,6 +17,7 @@ def new_run_event(
     event_id: str | None = None,
     timestamp: datetime | None = None,
 ) -> RunEventV1:
+    # sequence 由持久化写入方分配，构造器不另建进程内事件计数器。
     return RunEventV1(
         event_id=event_id or f"evt_{uuid4().hex}",
         sequence=sequence,
