@@ -17,6 +17,7 @@ ToolArtifactInput = ToolArtifactV1 | Mapping[str, JsonValue]
 def _validate_artifacts(
     artifacts: Sequence[ToolArtifactInput],
 ) -> list[ToolArtifactV1]:
+    # 外部 Mapping 仍需经过生成模型校验，不能直接作为已验证的 Artifact 返回。
     return [
         artifact
         if isinstance(artifact, ToolArtifactV1)
