@@ -20,6 +20,7 @@ export async function createThread(request: ThreadCreateRequest = {}): Promise<T
 
 export async function listThreads(): Promise<ThreadSummary[]> {
   const response = await api.get<ThreadListResponse>('/v1/threads');
+  // 在客户端边界校验每项身份，让列表消费者获得格式有效的 Thread ID。
   return (response.data.threads || []).map((thread) => {
     requireThreadId(thread.thread_id);
     return thread;
