@@ -521,6 +521,7 @@ class DockerSandboxAdapter:
         container_name: str,
     ) -> list[str]:
         limits = spec.limits
+        # 可写空间放在有大小上限的 tmpfs 中，并禁止执行及设备文件语义。
         workspace_mount = (
             "rw,noexec,nosuid,nodev,"
             f"size={limits.workspace_bytes},mode=0700,uid=65532,gid=65532"
