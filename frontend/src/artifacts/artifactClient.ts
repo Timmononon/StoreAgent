@@ -16,6 +16,7 @@ export async function fetchArtifact(uri: string): Promise<Blob> {
     });
   }
   try {
+    // 保留二进制响应，避免下载内容被默认 JSON 或文本转换破坏。
     const response = await api.get<Blob>(uri, { responseType: 'blob' });
     return response.data;
   } catch (error) {
