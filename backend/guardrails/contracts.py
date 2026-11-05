@@ -232,6 +232,7 @@ class ToolArgsSummary:
             "node_count": 0,
         }
         complete = True
+        # 仅记录当前递归路径的对象，区分循环引用与多处复用的正常容器。
         active_objects: set[int] = set()
 
         def classify_key(key: object) -> str:
