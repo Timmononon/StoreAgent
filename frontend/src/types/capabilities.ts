@@ -86,6 +86,7 @@ export interface ManagedHttpTool {
   method: 'GET' | 'POST';
   input_schema: Record<string, unknown>;
   static_headers: Record<string, string>;
+  // 值是服务端环境变量名，管理界面不持有 Header Secret 原文。
   secret_headers: Record<string, string>;
   required_roles: string[];
   requires_approval: boolean;
