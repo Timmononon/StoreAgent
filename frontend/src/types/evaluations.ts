@@ -83,6 +83,7 @@ export interface EvaluationModelSummary {
 }
 
 export interface RagMetricResult {
+  // null 表示没有可用指标值，展示和比较时应与数值 0 区分。
   value: number | null;
   eligible_cases: number;
 }
