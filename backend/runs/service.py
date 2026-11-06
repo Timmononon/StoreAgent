@@ -44,6 +44,7 @@ class RunService:
         approved_tools: frozenset[str] = frozenset(),
     ) -> RunReservation:
         compact_message = message.strip()
+        # 预留 Run 时传入模型快照，后续控制面修改不重绑已创建的工作。
         model_snapshot = self.model_control.runtime_snapshot(
             required_roles=frozenset({ModelRole.ANSWER})
         )
