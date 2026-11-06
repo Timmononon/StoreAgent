@@ -45,6 +45,7 @@ class RedisCache:
     def delete_strict(self, key: str) -> int:
         """Delete a key for durable cleanup paths; transport failures propagate."""
 
+        # 持久清理调用方必须观察删除失败，不能把连接故障当作清理完成。
         return int(self._get_client().delete(self._key(key)))
 
     def delete_pattern(self, pattern: str) -> None:
