@@ -32,6 +32,7 @@ def canonical_http_origin(
         return None
 
     hostname = hostname.casefold()
+    # IPv6 主机在 Origin 中保留方括号，避免与尾部端口混淆。
     host = f"[{hostname}]" if ":" in hostname else hostname
     # 显式默认端口与省略端口视为同一 Origin，避免 allowlist 比较不一致。
     if port is None or (scheme, port) in {("http", 80), ("https", 443)}:
