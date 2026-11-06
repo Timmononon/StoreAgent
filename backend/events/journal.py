@@ -60,6 +60,7 @@ def append_event_in_session(
         attempts=0,
         created_at=created_at,
     )
+    # Journal 与待发布通知加入调用方事务，提交与回滚保持一致。
     db.add_all([row, outbox])
     db.flush()
     return JournalAppend(event=event, outbox_id=outbox.id)
