@@ -73,6 +73,7 @@ class StoredUpload:
 
 
 def sanitize_original_filename(value: str) -> str:
+    # 统一 Windows 与 POSIX 路径分隔符后取 basename，丢弃客户端目录信息。
     normalized = unicodedata.normalize("NFC", value or "").replace("\\", "/")
     basename = normalized.rsplit("/", 1)[-1]
     basename = _CONTROL_RE.sub("", basename).strip().strip(".")
