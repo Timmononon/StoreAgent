@@ -133,6 +133,7 @@ class CancellationToken:
             if self.reason is not None
             else -1
         )
+        # 并发取消请求只能提升原因优先级，不能覆盖已记录的更强原因。
         if _CANCELLATION_REASON_PRIORITY[reason] > current_priority:
             self.reason = reason
         self.event.set()
