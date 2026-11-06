@@ -37,6 +37,7 @@ class RedisEventTransport:
             await self._get_client().xadd(
                 self._stream_key(event.run_id),
                 {"event": event.model_dump_json()},
+                # Stream ID 对齐持久化 sequence，使重放游标无需另建映射。
                 id=f"{event.sequence}-0",
                 maxlen=self.maxlen,
                 approximate=True,
