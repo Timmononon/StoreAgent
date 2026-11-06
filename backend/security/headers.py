@@ -62,6 +62,7 @@ class SecurityHeadersMiddleware:
         path = path_value if isinstance(path_value, str) else "/"
 
         async def send_with_security_headers(message: Message) -> None:
+            # 仅在响应头发出时追加策略，响应体数据继续原样传递。
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
                 for name, value in browser_hardening_headers().items():
