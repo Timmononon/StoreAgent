@@ -90,6 +90,7 @@ class OutboxPublisher:
             try:
                 event = RunEventV1.model_validate(item.payload)
                 await self.transport.publish(event)
+                # 发布成功后再标记，失败记录保留给后续批次重试。
                 await asyncio.to_thread(self._mark_published, item.id)
                 published += 1
             except Exception:
