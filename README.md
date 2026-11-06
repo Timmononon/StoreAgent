@@ -7,9 +7,9 @@
 
 - **知识库问答**：文档版本化入库，Dense + BM25 混合检索、Rerank 与来源引用。
 - **可恢复执行**：Thread / Run / Event 持久化，支持流式重连、取消和 HITL 暂停恢复。
-- **Skill / Tool**：知识检索、Web Research、管理员只读 SQL、隔离 Sandbox 与自定义 HTTP Tool。
+- **Skill / Tool**：知识检索、Web Research、管理员只读 SQL 与自定义 HTTP Tool。
 - **模型与评测**：管理模型角色分配，为 Run 和 Evaluation Job 冻结模型快照，查看评测报告与趋势。
-- **权限与审计**：用户隔离、角色权限、工具审批与 Guardrail；可选能力需要单独配置。
+- **权限与审计**：用户隔离、角色权限与工具审批；可选能力需要单独配置。
 
 **技术栈**：Python 3.12+ · FastAPI · LangGraph · PostgreSQL · Redis · Milvus · Vue 3 · TypeScript
 
@@ -79,9 +79,5 @@ API 与索引 worker 需共享持久化的 `UPLOAD_DIR`。
 
 - **开发与部署**：[部署指南](docs/runbooks/deployment.md) · [仓库质量门禁](docs/runbooks/repository-quality-gates.md) · [前端质量门禁](docs/runbooks/frontend-quality-gates.md)
 - **知识库与评测**：[索引 worker](docs/runbooks/persistent-indexing-worker.md) · [RAG 评测](evals/rag/README.md)
-- **能力配置**：[Skill / Tool](docs/runbooks/skill-tool-registry.md) · [Web Research](docs/runbooks/web-research.md) · [SQL Assistant](docs/runbooks/sql-assistant.md)
-- **安全**：[Guardrail 与 Sandbox](docs/runbooks/guardrails-and-sandbox.md) · [认证生命周期](docs/runbooks/auth-token-lifecycle.md)
-- **架构**：[领域术语](CONTEXT.md) · [架构决策](docs/adr/) · [历史架构图](docs/architecture/supermew-system-architecture.html)
-
-历史架构图和[原项目资料](https://zread.ai/icey1287/SuperMew)保留原始名称；
-现有运行标识的保留规则见[项目名称与运行标识](docs/runbooks/deployment.md#项目名称与运行标识)。
+- **能力配置**：[Skill / Tool](docs/runbooks/skill-tool-registry.md) · [SQL Assistant](docs/runbooks/sql-assistant.md)
+- **架构**：[领域术语](CONTEXT.md) · [架构决策](docs/adr/)
