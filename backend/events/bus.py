@@ -73,6 +73,7 @@ class PersistentEventBus:
         heartbeat_deadline = loop.time() + heartbeat
 
         while True:
+            # 通知只用于唤醒；每轮仍从 Journal 按游标读取权威事件。
             events = await asyncio.to_thread(
                 self.journal.read_after,
                 run_id=run_id,
