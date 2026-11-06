@@ -32,6 +32,7 @@ TERMINAL_RUN_STATUSES = {
 }
 
 
+# cancelling 不再允许 succeeded，避免取消被接受后又转为成功。
 ALLOWED_TRANSITIONS = {
     RunStatus.QUEUED.value: {
         RunStatus.PENDING.value,
