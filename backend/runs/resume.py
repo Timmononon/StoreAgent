@@ -49,6 +49,7 @@ class RunResumeCoordinator:
         answer: str,
         idempotency_key: str,
     ) -> RunResumeAcceptance:
+        # 将访问复核传入消费操作，在接受答案的同一路径校验当前运行权限。
         consumed = self.checkpoints.consume_resume(
             username=username,
             run_id=run_id,
