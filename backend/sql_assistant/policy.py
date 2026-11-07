@@ -175,6 +175,7 @@ class SqlPolicyCompiler:
         first = self._prepare(parsed, catalog, original_sql=query)
         normalized_sql = first.expression.sql(dialect=_DIALECT, pretty=False)
 
+        # 再解析规范化结果，确认序列化没有改变关系、投影或脱敏位置。
         reparsed = self._parse_generated_query(normalized_sql)
         second = self._prepare(reparsed, catalog, original_sql=normalized_sql)
         regenerated_sql = second.expression.sql(dialect=_DIALECT, pretty=False)
