@@ -106,6 +106,7 @@ class ModelCatalogSnapshot(BaseModel):
 
     @model_validator(mode="after")
     def hash_matches_payload(self) -> ModelCatalogSnapshot:
+        # 读取持久快照时重新计算哈希，拒绝身份与 Assignment 内容不一致的数据。
         expected = model_catalog_hash(self.assignments)
         if self.catalog_hash != expected:
             raise ValueError("model catalog hash does not match assignments")
