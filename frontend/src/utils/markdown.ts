@@ -132,6 +132,7 @@ export function parseMarkdown(text: string, msgIndex?: number | null): string {
         if (part.startsWith('</code') || part.startsWith('</pre')) inCode = false;
         return part;
       }
+      // 代码块中的数字括号保留原文，只把普通文本中的引用转为可交互标记。
       if (!inCode) {
         return part.replace(/\[([\d\s,]+)\]/g, (match: string, p1: string) => {
           const numbers = p1
