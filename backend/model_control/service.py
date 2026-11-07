@@ -50,6 +50,7 @@ def _normalize_model_name(value: str) -> str:
 
 
 def _normalize_base_url(value: str) -> str:
+    # 规范化末尾斜杠，让同一服务地址在配置匹配时使用一致形式。
     normalized = (value or "").strip().rstrip("/")
     if not normalized:
         return ""
