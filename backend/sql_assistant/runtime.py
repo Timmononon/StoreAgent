@@ -232,6 +232,7 @@ class SqlAssistantRuntime:
         try:
             compiled = self._compiler.compile(sql, catalog)
         except SqlPolicyError:
+            # 对外只返回稳定策略错误，不带出原 SQL 或编译器内部细节。
             raise SqlAssistantError(SqlAssistantErrorCode.POLICY_DENIED) from None
         result = self._adapter.execute(
             compiled,
