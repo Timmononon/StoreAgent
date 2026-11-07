@@ -76,6 +76,7 @@ function parseJsonRecord(value: string, label: string): Record<string, unknown> 
   } catch {
     throw new Error(`${label}必须是合法 JSON`);
   }
+  // JSON 解析成功仍可能得到标量或数组，这些不能作为配置对象提交。
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error(`${label}必须是 JSON 对象`);
   }
