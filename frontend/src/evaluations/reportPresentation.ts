@@ -54,6 +54,7 @@ export const metricTrendDomain = (
 
 export const trendPosition = (value: number, domain: MetricTrendDomain) => {
   const span = domain.max - domain.min || 1;
+  // 超出纵轴范围的值仍落在图内边界，避免标记绘制到可视区域之外。
   const ratio = Math.min(Math.max((value - domain.min) / span, 0), 1);
   return 42 - ratio * 34;
 };
