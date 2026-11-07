@@ -8,6 +8,7 @@ export function isThreadId(value: unknown): value is string {
 }
 
 export function requireThreadId(value: unknown): string {
+  // 身份字符串按原值校验，不通过自动裁剪把错误输入变成另一个合法 ID。
   if (!isThreadId(value)) {
     throw getPublicError({
       code: 'INVALID_REQUEST',
