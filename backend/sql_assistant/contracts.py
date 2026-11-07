@@ -93,6 +93,7 @@ def _function_rule(value: str) -> str:
             "allowed_functions entries must use function or schema.function"
         )
     if len(parts) == 1:
+        # 未限定 schema 的内建函数别名统一为解析器使用的名称再参与白名单比较。
         return _POSTGRES_FUNCTION_ALIASES.get(compact, compact)
     return compact
 
