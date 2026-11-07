@@ -5,6 +5,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 export const normalizeRagEvaluationDataset = (value: unknown): RagEvaluationDataset => {
   if (!isRecord(value)) throw new Error('Dataset JSON 必须是对象');
+  // 同时接受 Dataset 本体与带 dataset 字段的记录，后续共用同一校验流程。
   const raw = isRecord(value.dataset) ? value.dataset : value;
   const schemaVersion = raw.schema_version;
   const name = raw.name;
