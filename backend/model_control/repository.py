@@ -198,6 +198,7 @@ class ModelControlRepository:
                     .filter(ModelAssignment.profile_id == profile.id)
                     .all()
                 }
+                # 修改 Profile 时同时校验现有角色，避免破坏正在使用它的 Assignment。
                 for role in assigned_roles:
                     requirement = MODEL_ROLE_REQUIREMENTS[role]
                     if requirement.supports_stream and not supports_stream:
