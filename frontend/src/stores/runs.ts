@@ -107,6 +107,7 @@ function beginCreateAttempt(
   if (existing && command.idempotencyKey && command.idempotencyKey !== existing.idempotencyKey) {
     throw getPublicError({ code: 'CONFLICT', retryable: false, category: 'run' });
   }
+  // 网络重试复用未决尝试的幂等键，避免为同一条输入创建第二个 Run。
   const idempotencyKey =
     existing?.idempotencyKey || command.idempotencyKey || createIdempotencyKey('run');
   pendingCreates[command.threadId] = {
