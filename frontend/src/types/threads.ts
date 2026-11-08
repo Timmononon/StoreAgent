@@ -7,6 +7,7 @@ export interface ThreadSummary {
   title: string;
   message_count: number;
   updated_at: string;
+  // version 保护消息追加顺序，已有 assistant Message 的正文更新不推进它。
   version: number;
   thread_status: string;
   active_run_id: string | null;
