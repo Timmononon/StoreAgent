@@ -47,6 +47,7 @@ export async function assignModelRole(
   payload: ModelAssignmentPayload
 ): Promise<ModelControlPlane> {
   try {
+    // 返回完整控制面，让调用方同时更新角色分配与目录哈希。
     return (await api.put<ModelControlPlane>(`/v1/models/assignments/${role}`, payload)).data;
   } catch (error) {
     throw getPublicError(error);
