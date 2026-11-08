@@ -185,6 +185,7 @@ class WebSourceLedger:
         def render(match: re.Match[str]) -> str:
             source_id = match.group("source_id")
             source = self._sources.get(source_id)
+            # 未登记的引用不能拼成链接，必须在最终回答定稿时显式失败。
             if source is None:
                 raise WebSourceLedgerError(WebSourceLedgerCode.UNKNOWN_SOURCE)
             cited_sources.add(source_id)
