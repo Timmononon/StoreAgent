@@ -17,6 +17,7 @@ export interface RunRecord {
   status: DurableRunStatus | string;
   idempotency_key: string;
   user_message_id: number;
+  // assistant Message 在 Run 预留时确定，恢复和重放始终沿用该身份。
   assistant_message_id: number;
   fencing_token?: number;
   on_disconnect: 'cancel' | 'continue' | string;
