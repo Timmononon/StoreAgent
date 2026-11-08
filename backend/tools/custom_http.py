@@ -139,6 +139,7 @@ class CustomHttpToolRuntime:
 
         try:
             if profile.method == "GET":
+                # 禁止跟随重定向，配置端点不能借响应跳转扩大请求目标范围。
                 fetched = self._client.get(
                     url,
                     headers=headers,
