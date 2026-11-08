@@ -35,6 +35,7 @@ def new_tool_success(
 ) -> ToolResultV1:
     return ToolResultV1(
         schema_version=1,
+        # 成功结果显式清除错误与重试标志，消费者无需从 data 猜测执行状态。
         success=True,
         data=data,
         error_code=None,
