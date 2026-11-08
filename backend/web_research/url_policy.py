@@ -841,6 +841,7 @@ class WebUrlPolicy:
                 "DNS resolver returned an empty or oversized address set",
                 safe_details={"max_addresses": self.max_resolved_addresses},
             )
+        # 检查整个 DNS 地址集合，任一非公网地址都会拒绝本次解析结果。
         canonical: set[str] = set()
         for value in values:
             try:
