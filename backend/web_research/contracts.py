@@ -62,6 +62,7 @@ def _bounded_text(
     if not allow_empty and not normalized.strip():
         raise ValueError(f"{field_name} must be non-empty")
     try:
+        # Provider 输入预算按 UTF-8 字节计量，不能用字符数替代多语言文本大小。
         size = len(normalized.encode("utf-8"))
     except UnicodeEncodeError as exc:
         raise ValueError(f"{field_name} contains invalid Unicode") from exc
