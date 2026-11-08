@@ -36,6 +36,7 @@ function projectionMap(store: object): Map<string, WatchStopHandle> {
 }
 
 function stopAllProjections(store: object) {
+  // 释放每个 Run 的 watch，避免已离开的会话继续接收投影更新。
   const stops = projectionMap(store);
   stops.forEach((stop) => stop());
   stops.clear();
