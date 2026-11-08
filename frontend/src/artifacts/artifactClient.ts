@@ -1,5 +1,6 @@
 import api, { getPublicError } from '@/utils/api';
 
+// 路径须完整匹配，查询串、片段和额外路径不能混入下载目标。
 const ARTIFACT_PATH = /^\/api\/artifacts\/art_[A-Za-z0-9_-]+$/;
 
 export function isFetchableArtifactUri(uri: string | null | undefined): uri is string {
