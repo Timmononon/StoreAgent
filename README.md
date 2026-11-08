@@ -7,7 +7,7 @@
 
 - **知识库问答**：文档版本化入库，Dense + BM25 混合检索、Rerank 与来源引用。
 - **可恢复执行**：Thread / Run / Event 持久化，支持流式重连、取消和 HITL 暂停恢复。
-- **Skill / Tool**：知识检索、Web Research、管理员只读 SQL 与自定义 HTTP Tool。
+- **Skill / Tool**：知识检索。
 - **模型与评测**：管理模型角色分配，为 Run 和 Evaluation Job 冻结模型快照，查看评测报告与趋势。
 - **权限与审计**：用户隔离、角色权限与工具审批；可选能力需要单独配置。
 
