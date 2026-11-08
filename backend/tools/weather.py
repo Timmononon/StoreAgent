@@ -37,6 +37,7 @@ def _call_context(ctx: RunRequestContext | None = None) -> ProviderCallContext:
     cancellation = None
     if ctx is not None:
         request_deadline, cancellation = ctx.provider_runtime()
+    # 天气阶段与所属 Run 共用更早的截止时间，重试不能延长 Run 的预算。
     stage_deadline = time.monotonic() + WEATHER_TIMEOUT_SECONDS
     return ProviderCallContext(
         provider="amap-weather",
