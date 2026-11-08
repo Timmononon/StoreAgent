@@ -28,6 +28,7 @@ def make_control_tool_overrides(holder: Mapping[str, object]) -> dict[str, objec
         try:
             skill_session, tool_session = _sessions()
             activated = skill_session.describe(name)
+            # 激活 Skill 不增加权限，只披露与本 Run 已授权工具的交集。
             allowed = sorted(
                 activated.allowed_tools.intersection(tool_session.authorized_names)
             )
