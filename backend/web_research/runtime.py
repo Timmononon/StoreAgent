@@ -659,6 +659,7 @@ class WebResearchRuntime:
                 cancellation_probe=cancellation_probe,
             )
             remaining = max(deadline_at - self._monotonic(), 0.0)
+            # 短时等待后重新检查取消与 deadline，避免排队期间长时间无法响应。
             acquired = self._slots.acquire(timeout=min(remaining, 0.05))
         try:
             yield
