@@ -11,6 +11,7 @@ export interface ModelProfile {
   supports_structured_output: boolean;
   enabled: boolean;
   source: 'environment' | 'user';
+  // Profile 修改会递增版本；运行快照使用创建时捕获的版本。
   version: number;
   created_at: string;
   updated_at: string;
