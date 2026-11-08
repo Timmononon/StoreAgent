@@ -348,6 +348,7 @@ export const useDocumentStore = defineStore('documents', {
         pollInFlight = true;
         try {
           const response = await api.get(`/documents/upload/jobs/${encodeURIComponent(jobId)}`);
+          // 等待网络期间可能切换了 Job，旧响应不能覆盖新上传的进度。
           if (this.activeUploadJobId !== jobId) return;
 
           const job = response.data as UploadJob;
