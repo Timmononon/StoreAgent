@@ -979,6 +979,7 @@ class SafeWebHttpClient:
                 )
                 if current.scheme == "https" and redirected.scheme != "https":
                     raise WebHttpError(WebHttpErrorCode.REDIRECT_DENIED)
+                # POST 重定向限制在同一 Origin，防止请求体与凭据转交其他站点。
                 if _origin(current) != _origin(redirected):
                     raise WebHttpError(WebHttpErrorCode.REDIRECT_DENIED)
                 current = redirected
