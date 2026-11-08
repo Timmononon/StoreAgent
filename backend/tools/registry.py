@@ -663,6 +663,7 @@ class ToolRegistry:
                 ),
                 gate=threading.BoundedSemaphore(internal_descriptor.max_concurrency),
             )
+            # 注册内容变化后使目录哈希缓存失效，下次读取反映最新描述。
             self._catalog_hash = None
 
     @property
