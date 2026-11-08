@@ -230,6 +230,7 @@ export const useCapabilityStore = defineStore('capabilities', {
         if (!skill) {
           throw capabilityError('NOT_FOUND', '所选能力不存在或已被移除。');
         }
+        // 启动前再次使用当前目录检查可用性，不能只依赖面板中的选中状态。
         if (!skill.available) {
           const code =
             skill.availability_reason === 'permission_required'
