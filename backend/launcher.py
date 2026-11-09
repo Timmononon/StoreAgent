@@ -102,6 +102,7 @@ def _shutdown_services(
     for service in running:
         _send_process_signal(service.process, signal.SIGTERM)
 
+    # 所有子进程共享一次退出宽限期，避免逐个等待放大总关闭耗时。
     deadline = time.monotonic() + timeout_seconds
     for service in running:
         remaining = max(deadline - time.monotonic(), 0.0)
