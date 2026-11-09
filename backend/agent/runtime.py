@@ -75,6 +75,7 @@ def extract_message_content(message: object) -> str:
     if isinstance(content, str):
         return content
     if isinstance(content, list):
+        # 多模态内容只提取文本块，其他块不直接转成面向用户的正文。
         text = ""
         for block in content:
             if isinstance(block, str):
