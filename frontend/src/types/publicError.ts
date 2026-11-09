@@ -167,6 +167,7 @@ export function normalizePublicErrorInfo(
     source.retry_after ?? source.retry_after_seconds ?? source.retryAfterSeconds
   );
   const defaultRetryAfterSeconds = optionalNumber(defaults.retryAfterSeconds);
+  // 两侧都提供等待时间时取较大值，避免缩短服务端或调用方要求的退避。
   const retryAfterSeconds =
     sourceRetryAfterSeconds === undefined
       ? defaultRetryAfterSeconds
