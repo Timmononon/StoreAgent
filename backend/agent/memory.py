@@ -119,6 +119,7 @@ class PersistentMemoryManager:
         history_messages: list | None = None,
         model_snapshot: ModelCatalogSnapshot | None = None,
     ) -> str:
+        # 同步模型调用在线程中执行，记忆维护不阻塞调用方的事件循环。
         return await asyncio.to_thread(
             self.update_sync,
             current_note,
