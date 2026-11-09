@@ -30,6 +30,7 @@ class RuntimeBudget:
 
     @property
     def input_token_budget(self) -> int:
+        # 输入预算先扣除回答预留，避免上下文占满模型的总窗口。
         return self.max_context_tokens - self.response_reserve_tokens
 
 
