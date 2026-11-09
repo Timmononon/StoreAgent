@@ -61,6 +61,7 @@ export const useThreadStore = defineStore('threads', {
       try {
         const created = await createThreadRequest(title ? { title } : {});
         const item = toThreadListItem(created);
+        // 同一身份只保留一项，创建结果置顶时不重复插入已有会话。
         this.threads = [
           item,
           ...this.threads.filter((thread) => thread.thread_id !== item.thread_id),
