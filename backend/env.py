@@ -12,5 +12,6 @@ def load_env() -> None:
     global _LOADED
     if _LOADED:
         return
+    # 使用项目根路径而非当前工作目录，让独立入口加载同一份环境文件。
     load_dotenv(PROJECT_ROOT / ".env")
     _LOADED = True
