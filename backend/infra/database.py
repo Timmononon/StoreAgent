@@ -69,6 +69,7 @@ def before_cursor_execute(conn, cursor, statement, parameters, context, executem
 def alembic_config(database_url: str | None = None) -> Config:
     config = Config(str(Path(PROJECT_ROOT) / "alembic.ini"))
     if database_url:
+        # Alembic 配置使用插值语法，DSN 中的百分号需按字面量转义。
         config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
     return config
 
