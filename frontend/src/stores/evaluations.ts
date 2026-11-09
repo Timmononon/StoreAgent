@@ -84,6 +84,7 @@ export const useEvaluationStore = defineStore('evaluations', {
     async refreshJobs() {
       const jobs = await listRagEvaluationJobs();
       this.jobs = jobs;
+      // 当前 Job 已不在列表时重新选取，避免详情继续指向失效的列表项。
       if (this.selectedJobId && !jobs.some((job) => job.id === this.selectedJobId)) {
         this.selectedJobId = jobs[0]?.id || '';
       }
