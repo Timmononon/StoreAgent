@@ -96,6 +96,7 @@ function sanitizeMarkdownHtml(html: string): string {
       return;
     }
     anchor.setAttribute('target', '_blank');
+    // 新窗口不获得 opener，也不携带当前页面作为来源信息。
     anchor.setAttribute('rel', 'noopener noreferrer');
   });
   return template.innerHTML;
