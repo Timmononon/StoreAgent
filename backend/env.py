@@ -13,5 +13,6 @@ def load_env() -> None:
     if _LOADED:
         return
     # 使用项目根路径而非当前工作目录，让独立入口加载同一份环境文件。
+    # dotenv 默认不覆盖进程中已注入的配置，部署环境值保持优先。
     load_dotenv(PROJECT_ROOT / ".env")
     _LOADED = True
