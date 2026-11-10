@@ -373,6 +373,7 @@ class ModelControlRepository:
                     db.add(assignment)
                 else:
                     assignment.profile_id = profile.id
+                    # 分配覆盖也记录操作者和时间，保留控制面变更归属。
                     assignment.updated_by_user_id = user_id
                     assignment.updated_at = utcnow()
                 db.flush()
