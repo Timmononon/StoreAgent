@@ -29,6 +29,7 @@ class DocumentListResponse(BaseModel):
 
 
 class DocumentUploadStartResponse(BaseModel):
+    # 返回的是持久 Job 的受理信息，不能据此认定文档版本已发布。
     job_id: str
     filename: str
     message: str
