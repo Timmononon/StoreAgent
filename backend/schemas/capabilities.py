@@ -33,6 +33,7 @@ class CapabilityToolResponse(CapabilitySchema):
     group: str = Field(min_length=1, max_length=128)
     version: str = Field(min_length=1, max_length=64)
     exposure: Literal["resident", "control", "deferred"]
+    # 目录可用性用于展示，实际调用仍需经过服务端的执行授权。
     available: bool
     availability_reason: AvailabilityReason | None
     required_roles: tuple[str, ...]
