@@ -18,6 +18,7 @@ class RedisCache:
         return self._client
 
     def _key(self, key: str) -> str:
+        # 所有缓存操作共用命名空间，避免不同部署对同名业务键相互覆盖。
         return f"{self.key_prefix}:{key}"
 
     def get_json(self, key: str) -> Optional[Any]:
