@@ -30,6 +30,7 @@ class ThreadInfo(ThreadSchema):
     @field_validator("updated_at")
     @classmethod
     def updated_at_must_be_utc(cls, value: datetime) -> datetime:
+        # API 时间必须携带时区，拒绝让客户端按本机时区猜测更新时间。
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("Thread timestamps must include timezone")
         return value.astimezone(UTC)
