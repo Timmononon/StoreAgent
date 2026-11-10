@@ -41,6 +41,7 @@ class ModelDeleteResponse(ModelSchema):
 class ModelControlPlaneResponse(ModelSchema):
     schema_version: Literal[1] = 1
     catalog_hash: str
+    # 公开配置状态不包含 API Key 原值，管理员界面也只接收此布尔标志。
     api_key_configured: bool
     profiles: tuple[ModelProfileRecord, ...]
     assignments: dict[str, ModelProfileRecord | None]
