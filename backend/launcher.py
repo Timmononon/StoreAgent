@@ -164,6 +164,7 @@ def supervise_services(
                 exit_code = service.process.poll()
                 if exit_code is None:
                     continue
+                # 任一常驻服务退出都结束联合启动，避免其余进程处于缺员状态。
                 print(
                     f"[storeagent] {service.command.name} exited with code "
                     f"{exit_code}; stopping remaining services",
