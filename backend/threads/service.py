@@ -153,6 +153,7 @@ class ThreadService:
         )
         if rows is None:
             raise AppError(ErrorCode.NOT_FOUND, "Thread 不存在", status_code=404)
+        # 多取的一条只判断是否还有历史，不能混入本页响应。
         has_previous = len(rows) > limit
         selected = rows[:limit]
         # Repository 按新到旧取页，响应按 sequence 正序展示。
