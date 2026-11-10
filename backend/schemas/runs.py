@@ -22,6 +22,7 @@ class RunCreateRequest(RunSchema):
     @field_validator("approved_tools")
     @classmethod
     def validate_approved_tools(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        # 授权列表只接受唯一工具名，重复项按输入错误处理而非静默合并。
         if len(set(value)) != len(value):
             raise ValueError("approved_tools 不能包含重复项")
         if any(
