@@ -60,6 +60,7 @@ class RagEvaluationJobResponse(EvaluationSchema):
     id: str
     dataset_id: str
     dataset_name: str
+    # 报告关联创建 Job 时的数据集身份，不能仅按可变显示名称比较。
     dataset_fingerprint: str
     baseline_job_id: str | None = None
     status: RagEvaluationJobStatus
