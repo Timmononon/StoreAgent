@@ -1095,6 +1095,7 @@ class PostgresSqlAssistantAdapter:
                 "row_count": len(rows),
                 "truncated": truncated,
             }
+            # 最终预算包含列名和响应结构，不能只累计行数据的大小。
             result_bytes = len(_json_bytes(payload))
             if result_bytes > self.settings.max_result_bytes:
                 _raise(SqlAssistantErrorCode.RESULT_LIMIT_EXCEEDED)
