@@ -328,6 +328,7 @@ class SqlAssistantRuntime:
                 ]
             else:
                 raise SqlAssistantError(SqlAssistantErrorCode.SECURITY_CHECK_FAILED)
+            # 未限定 schema 的同名表必须唯一，不能任意选择一个匹配项。
             if len(matches) != 1:
                 raise SqlAssistantError(SqlAssistantErrorCode.SECURITY_CHECK_FAILED)
             if matches[0] not in selected:
