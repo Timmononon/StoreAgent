@@ -342,6 +342,7 @@ class ThreadRepository:
                 .filter(Message.thread_ref_id == thread.id)
             )
             if before is not None:
+                # sequence 游标作用于已验证归属的 Thread，不能跨会话解释。
                 query = query.filter(Message.sequence < before)
             rows = (
                 query.order_by(Message.sequence.desc())
