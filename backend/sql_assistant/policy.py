@@ -193,6 +193,7 @@ class SqlPolicyCompiler:
                 "SQL normalization was not idempotent",
             )
 
+        # 额外读取一行用于判断截断，实际返回仍受 max_rows 约束。
         limit_applied = self.policy.max_rows + 1
         executable = (
             exp.select("*")
