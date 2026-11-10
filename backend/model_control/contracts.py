@@ -84,6 +84,7 @@ class ModelRuntimeSpec(BaseModel):
 
     @classmethod
     def from_profile(cls, profile: ModelProfileRecord) -> ModelRuntimeSpec:
+        # 复制执行所需字段及版本，不把数据库 Profile 的可变生命周期带入快照。
         return cls(
             profile_id=profile.id,
             profile_version=profile.version,
