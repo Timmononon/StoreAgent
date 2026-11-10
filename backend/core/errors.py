@@ -232,6 +232,7 @@ def deserialize_public_error(value: str | None) -> PublicError | None:
         payload = json.loads(value)
     except (TypeError, ValueError, json.JSONDecodeError):
         return None
+    # 只有匹配格式标记的对象才按公开错误读取，普通文本或 JSON 不冒充错误契约。
     if not isinstance(payload, dict) or payload.get("format") != _PUBLIC_ERROR_FORMAT:
         return None
     code = payload.get("code")
