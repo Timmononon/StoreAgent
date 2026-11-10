@@ -179,6 +179,7 @@ class ModelControlService:
         enabled = {
             role: profile for role, profile in assigned.items() if profile.enabled
         }
+        # 已分配但被禁用的 Profile 同样视为缺失，不能进入运行快照。
         missing = sorted(role.value for role in required_roles.difference(enabled))
         if missing:
             raise AppError(
