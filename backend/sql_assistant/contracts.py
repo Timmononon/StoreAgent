@@ -390,6 +390,7 @@ class CompiledSqlQuery:
             raise ValueError("compiled read-only SQL cannot contain parameters")
         if self.limit_applied != self.max_rows + 1:
             raise ValueError("limit_applied must equal max_rows + 1")
+        # 脱敏位置必须有序且唯一，确保与输出列序号稳定对应。
         expected = tuple(sorted(set(self.masked_ordinals)))
         if expected != self.masked_ordinals:
             raise ValueError("masked_ordinals must be sorted and unique")
