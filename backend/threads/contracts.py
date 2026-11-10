@@ -22,6 +22,7 @@ ThreadId = Annotated[
 
 
 def validate_thread_id(value: str) -> str:
+    # 使用完整匹配，不能接受合法前缀之后夹带额外字符的身份。
     if _THREAD_ID.fullmatch(value) is None:
         raise ValueError(
             "thread_id 必须以字母或数字开头，且只能包含字母、数字、_、.、:、-"
