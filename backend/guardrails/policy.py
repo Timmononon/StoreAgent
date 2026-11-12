@@ -530,6 +530,7 @@ class ToolGuardrail:
                     ):
                         directive = provider_directive
                     else:
+                        # 基础策略要求审批时，扩展 Provider 的 ALLOW 不能取消审批。
                         directive = base_directive
                 else:
                     directive = base_directive
