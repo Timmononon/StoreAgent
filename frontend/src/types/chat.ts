@@ -38,6 +38,7 @@ export interface RagTraceFields {
   retrieval_stage?: string;
   route?: string;
   retrieval_status?: string;
+  // 可回答性描述证据结果，Provider 故障另由公开错误字段表达。
   retrieval_outcome?: 'ANSWERABLE' | 'NO_KNOWLEDGE' | 'INSUFFICIENT_EVIDENCE';
   evidence_relevance?: string;
   evidence_answerability?: string;
