@@ -15,4 +15,5 @@ def format_sse_event(event: RunEventV1) -> str:
 
 
 def format_sse_heartbeat() -> str:
+    # SSE 注释帧不会产生业务 Event，也不推进客户端的重放游标。
     return f": heartbeat {datetime.now(UTC).isoformat()}\n\n"
