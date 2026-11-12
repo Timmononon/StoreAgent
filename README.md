@@ -11,7 +11,7 @@
 - **模型与评测**：管理模型角色分配，为 Run 和 Evaluation Job 冻结模型快照，查看评测报告与趋势。
 - **权限与审计**：用户隔离、角色权限与工具审批；可选能力需要单独配置。
 
-**技术栈**：Python 3.12+ · FastAPI · LangGraph · PostgreSQL · Redis · Milvus · Vue 3 · TypeScript
+**技术栈**：Python 3.12+ · FastAPI · LangGraph · PostgreSQL · Redis · Milvus · TypeScript
 
 ## 快速启动
 
@@ -69,7 +69,7 @@ API 与索引 worker 需共享持久化的 `UPLOAD_DIR`。
 | 目录                      | 内容                                   |
 | ------------------------- | -------------------------------------- |
 | `backend/`                | API、Agent、RAG、持久运行与后台 worker |
-| `frontend/`               | Vue 前端与管理控制面                   |
+| `frontend/`               | 前端与管理控制面                       |
 | `contracts/`              | 跨端协议与生成类型的 Schema 真源       |
 | `evals/rag/`              | 评测数据集、baseline 与质量 Gate       |
 | `tests/`、`frontend/e2e/` | 后端测试与浏览器回归                   |
