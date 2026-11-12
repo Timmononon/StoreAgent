@@ -326,6 +326,7 @@ class SandboxRuntime:
             return result
         finally:
             with self._lifecycle_condition:
+                # 成功或异常都归还活动计数，关闭流程才能等待所有执行退出。
                 self._active_executions -= 1
                 self._lifecycle_condition.notify_all()
             self._gate.release()
