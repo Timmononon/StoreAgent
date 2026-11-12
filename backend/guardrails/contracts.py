@@ -280,6 +280,7 @@ class ToolArgsSummary:
                 return "number"
             if isinstance(value, str):
                 counters["scalar_count"] += 1
+                # 形状摘要只记录类型，字符串原值不进入摘要哈希的输入。
                 return "string"
             if isinstance(value, (bytes, bytearray, memoryview)):
                 counters["scalar_count"] += 1
