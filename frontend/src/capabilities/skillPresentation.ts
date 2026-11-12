@@ -54,6 +54,7 @@ const chineseSummary = (description: string) => {
 };
 
 export const skillDisplayName = (name: string, description = '') => {
+  // 内建能力使用固定文案，服务端描述调整不会改变导航标签。
   const presentation = presentations[name];
   if (presentation) return presentation.label;
   const summary = chineseSummary(description);
