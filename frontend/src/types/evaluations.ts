@@ -67,6 +67,7 @@ export interface RagEvaluationGatePolicy {
   schema_version?: 1;
   k_values?: number[];
   critical_no_regression?: boolean;
+  // Gate 可限定观测来源，避免把契约 smoke 当成真实 RAG 运行证据。
   required_provenance?: 'contract_smoke' | 'live_rag' | null;
   metric_gates?: RagMetricGate[];
 }
