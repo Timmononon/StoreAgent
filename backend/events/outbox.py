@@ -110,6 +110,7 @@ class OutboxPublisher:
                 logger.warning("run event outbox loop failed", exc_info=True)
                 published = 0
             if published:
+                # 本轮有发布时立即检查下一批，避免在批次之间固定等待。
                 continue
             try:
                 await asyncio.wait_for(stop_event.wait(), timeout=interval)
