@@ -131,6 +131,7 @@ function safeString(value: unknown, maxLength = 240): string | undefined {
 }
 
 function optionalNumber(value: unknown): number | undefined {
+  // 重试等待时间仅接受有限非负数，异常数值不能进入客户端调度。
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return undefined;
   return value;
 }
