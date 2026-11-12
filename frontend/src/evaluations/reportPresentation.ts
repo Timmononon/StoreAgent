@@ -59,6 +59,7 @@ export const trendPosition = (value: number, domain: MetricTrendDomain) => {
   return 42 - ratio * 34;
 };
 
+// 使用空值合并保留有效的 0，缺失指标才作为 null 展示。
 export const gateValueFacts = (gate: RagGateResult): GateValueFact[] => [
   { key: 'actual', label: '实际', value: gate.actual ?? null },
   { key: 'threshold', label: '绝对阈值', value: gate.threshold ?? null },
