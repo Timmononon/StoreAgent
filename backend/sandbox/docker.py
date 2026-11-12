@@ -530,6 +530,7 @@ class DockerSandboxAdapter:
         return [
             self.config.docker_binary,
             "create",
+            # 执行阶段只使用已准备的本地镜像，不隐式联网拉取缺失镜像。
             "--pull=never",
             "--interactive",
             "--name",
