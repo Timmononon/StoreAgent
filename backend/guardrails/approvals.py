@@ -85,6 +85,7 @@ class RunToolApprovalGrant:
         )
 
     def __repr__(self) -> str:
+        # 调试输出只保留工具数量，不展开授权绑定的用户与运行身份。
         return f"RunToolApprovalGrant(tool_count={len(self.tool_names)}, bound=True)"
 
 
