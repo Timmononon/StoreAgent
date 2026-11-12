@@ -90,6 +90,7 @@ class RunEventJournal:
                         ErrorCode.RUN_NOT_FOUND, "Run 不存在", status_code=404
                     )
                 if worker_id is not None or fencing_token is not None:
+                    # worker 身份与 fence 必须同时匹配，拒绝旧执行者继续追加事件。
                     if (
                         worker_id is None
                         or fencing_token is None
