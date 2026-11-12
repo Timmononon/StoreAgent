@@ -46,6 +46,7 @@ export interface SqlAssistantFormDraft {
 }
 
 export function splitList(value: string): string[] {
+  // 兼容换行与逗号输入，去重后保留用户首次填写的顺序。
   return [
     ...new Set(
       value
