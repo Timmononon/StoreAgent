@@ -54,6 +54,7 @@ export interface UploadJob {
   max_attempts?: number;
   // Worker 执行代次，用于区分同一 Job 被重新领取后的旧写入者。
   execution_fence?: number;
+  // 服务端计划的下次重试时间；存在该字段不表示 Job 已经终止。
   next_retry_at?: string | null;
   created_at?: string;
   updated_at?: string;
