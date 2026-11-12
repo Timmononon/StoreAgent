@@ -34,7 +34,7 @@ export async function getThreadMessages(
   const params: { before?: number; limit: number } = {
     limit: options.limit ?? 200,
   };
-  // before 是 Message sequence 游标，省略时读取最新一页。
+  // before 是 Message sequence 的独占上界，省略时读取最新一页。
   if (options.before !== undefined) params.before = options.before;
   const response = await api.get<ThreadMessagePage>(
     `/v1/threads/${encodeURIComponent(requireThreadId(threadId))}/messages`,
