@@ -167,6 +167,7 @@ class SandboxError(RuntimeError):
             for key, value in details.items()
         ):
             raise ValueError("safe_details must contain bounded scalar metadata")
+        # 复制并冻结公开细节，异常创建后调用方不能再修改其审计元数据。
         self.safe_details = MappingProxyType(details)
         super().__init__(self.code)
 
