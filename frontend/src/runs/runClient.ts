@@ -78,6 +78,7 @@ export function getRunEvents(
 }
 
 export function cancelRun(runId: string, token: string): Promise<RunRecord> {
+  // 返回取消请求后的持久状态，调用成功本身不代表已经收到 Run 终态。
   return publicRequest(
     api.post<RunRecord>(
       `/v1/runs/${encodeURIComponent(runId)}/cancel`,
