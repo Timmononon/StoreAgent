@@ -11,6 +11,7 @@ export const normalizeRagEvaluationDataset = (value: unknown): RagEvaluationData
   const name = raw.name;
   const cases = raw.cases;
 
+  // 只接受已知版本，避免把未来字段语义按当前 Dataset 格式解释。
   if (schemaVersion !== 1) throw new Error('schema_version 必须为 1');
   if (typeof name !== 'string' || !name.trim()) throw new Error('Dataset name 不能为空');
   if (!Array.isArray(cases) || !cases.length) throw new Error('Dataset 至少需要一个 Case');
