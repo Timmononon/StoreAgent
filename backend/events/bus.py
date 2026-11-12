@@ -97,6 +97,7 @@ class PersistentEventBus:
                 heartbeat_deadline = loop.time() + heartbeat
                 continue
 
+            # 等待新通知不能越过心跳时刻，空闲订阅仍需定期输出保活信号。
             wait_seconds = min(poll_interval, remaining)
             if self.transport is not None:
                 try:
