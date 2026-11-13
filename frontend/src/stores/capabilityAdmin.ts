@@ -34,7 +34,7 @@ export const useCapabilityAdminStore = defineStore('capability-admin', {
     customTools: (state): ManagedHttpTool[] => state.controlPlane?.custom_tools || [],
     availableToolNames(state): string[] {
       if (!state.controlPlane) return [];
-      // 编辑 Skill 时合并内建与自定义工具名，按名称排序保持选择列表稳定。
+      // 合并排序的工具目录供 Skill 配置使用，不代表当前 Run 的授权集合。
       return [
         ...state.controlPlane.builtin_tools.map((tool) => tool.name),
         ...state.controlPlane.custom_tools.map((tool) => tool.name),
