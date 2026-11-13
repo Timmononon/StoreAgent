@@ -340,6 +340,7 @@ def artifact_tree_fingerprint(path: str | Path) -> str:
 
     digest = hashlib.sha256()
     for file_path in files:
+        # 使用相对路径绑定文件身份，移动整个语料目录不会改变指纹。
         relative = file_path.relative_to(relative_root).as_posix()
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
