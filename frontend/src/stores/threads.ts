@@ -78,6 +78,7 @@ export const useThreadStore = defineStore('threads', {
       this.deletingThreadIds = { ...this.deletingThreadIds, [threadId]: true };
       try {
         const response = await deleteThreadRequest(threadId);
+        // 服务端确认删除成功后再移除列表项，失败时保留用户可见的会话。
         this.threads = this.threads.filter((thread) => thread.thread_id !== threadId);
         return response.message || '对话已删除';
       } catch (error) {
