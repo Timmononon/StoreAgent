@@ -83,6 +83,7 @@ export const useModelStore = defineStore('models', {
     },
 
     async assignRole(role: ModelRole, profileId: string) {
+      // 分配更新只影响后续工作，已创建 Run 的模型仍由各自快照决定。
       return this.runMutation(
         () => assignModelRole(role, { profile_id: profileId }),
         `已更新 ${role} 模型；新 Assignment 仅影响后续 Run`
