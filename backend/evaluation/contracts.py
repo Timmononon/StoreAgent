@@ -64,6 +64,7 @@ class RagEvaluationJobRecord(EvaluationContract):
     total_cases: int = Field(ge=1)
     gate_policy: RagEvalGatePolicy
     model_catalog_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    # Job 携带创建时的完整模型配置，Worker 重领时仍使用同一快照。
     model_snapshot: ModelCatalogSnapshot
     owner_worker_id: str | None = None
     lease_expires_at: datetime | None = None
