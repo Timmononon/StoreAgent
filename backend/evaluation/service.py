@@ -61,6 +61,7 @@ class RagEvaluationService:
         gate_policy: RagEvalGatePolicy | None = None,
         baseline_job_id: str | None = None,
     ) -> RagEvaluationJobRecord:
+        # 评测创建时要求所有模型角色就绪，不能等 Worker 领取后再选择模型。
         model_snapshot = self.model_control.runtime_snapshot(
             required_roles=frozenset(ModelRole)
         )
