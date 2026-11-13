@@ -107,6 +107,7 @@ export function buildManagedSkillPayload(draft: SkillFormDraft): ManagedSkillPay
 
 export function buildManagedHttpToolPayload(draft: HttpToolFormDraft): ManagedHttpToolPayload {
   const endpoint = requiredText(draft.endpoint, 'Endpoint');
+  // 此处仅做表单协议预检，目标地址与网络权限仍由服务端校验。
   if (!endpoint.toLocaleLowerCase().startsWith('https://')) {
     throw new Error('Endpoint 必须使用 HTTPS');
   }
