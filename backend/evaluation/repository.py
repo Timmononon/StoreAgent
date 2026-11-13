@@ -489,6 +489,7 @@ class RagEvaluationRepository:
                         stage="job",
                     )
                 if job.status == RagEvaluationJobStatus.QUEUED.value:
+                    # 排队任务可直接终结；运行中的任务先记录取消请求供 Worker 收尾。
                     self._cancel_locked(db, job)
                 elif job.status == RagEvaluationJobStatus.RUNNING.value:
                     job.status = RagEvaluationJobStatus.CANCELLING.value
