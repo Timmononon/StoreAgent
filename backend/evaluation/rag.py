@@ -530,6 +530,7 @@ def _evaluate_rag(
     else:
         observation_values = observations
 
+    # 回归比较必须针对同一份数据内容，名称相同不能代替指纹一致。
     if baseline is not None and baseline.dataset_fingerprint != fingerprint:
         raise DatasetFingerprintMismatch(
             "baseline dataset fingerprint does not match the dataset"
