@@ -112,6 +112,7 @@ export const useEvaluationStore = defineStore('evaluations', {
     async createDataset(dataset: RagEvaluationDataset) {
       return this.runMutation(async () => {
         const record = await createRagEvaluationDataset(dataset);
+        // 服务端可能返回已存在的数据集，按记录身份更新，避免列表重复。
         const existing = this.datasets.findIndex((item) => item.id === record.id);
         if (existing >= 0) this.datasets[existing] = record;
         else this.datasets.unshift(record);
