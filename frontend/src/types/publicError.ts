@@ -156,6 +156,7 @@ export function normalizePublicErrorInfo(
     category === 'provider' || PROVIDER_CODES.has(code) || FIXED_CLIENT_MESSAGE_CODES.has(code)
       ? publicErrorMessage(code)
       : serverMessage || publicErrorMessage(code);
+  // 显式 false 也属于权威结果，不能被默认可重试错误码覆盖。
   const retryable =
     typeof source.retryable === 'boolean'
       ? source.retryable
