@@ -58,6 +58,7 @@ class RagEvaluationWorker:
             lease_seconds=worker_settings.evaluation_lease_seconds,
         )
         if claimed is None:
+            # 空闲时仍上报 Worker 心跳，让监控区分无任务与进程失联。
             self.repository.worker_heartbeat(
                 worker_id=self.worker_id,
                 status="running",
